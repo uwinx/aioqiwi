@@ -100,6 +100,12 @@ Contributing
 
 Contributions are welcome
 
---------
-0.0.0.a1
---------
+----------
+Community:
+----------
+
+
+.. image:: https://banner2.kisspng.com/20180715/afz/kisspng-computer-icons-telegram-logo-5b4bb35b8b3a97.7981817315316877715703.jpg
+    :target: https://t.me/joinchat/B2cC_hSIAiYXxqKghdguCA
+    :alt: aioqiwi-code-style
+    :height: 100
