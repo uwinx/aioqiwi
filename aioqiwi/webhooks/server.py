@@ -7,19 +7,11 @@ import logging
 from aiohttp.web import View, Response, Application, HTTPUnauthorized
 
 from ..models import updates, utils
+from ..mixin import deserialize
 from .handler import Handler
 
 
 logger = logging.getLogger("aioqiwi")
-
-deserialize = json.loads
-
-for json_lib in ["rapidjson", "ujson", "json"]:
-    try:
-        deserialize = importlib.import_module(json_lib).loads
-        break
-    except ImportError:
-        continue
 
 logger.info(f"Deserialization tool: {deserialize.__name__}")
 

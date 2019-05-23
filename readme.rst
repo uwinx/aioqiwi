@@ -94,15 +94,40 @@ Installation
     asyncio.run(txn())
 
 
-------------
-Contributing
-------------
+---------------------------------------------------
+🔥 Qiwi new API p2p transactions(bill-payments)[RAW]
+---------------------------------------------------
+I'm discovering this API, looks funny
+
+
+.. code:: python
+
+    import asyncio
+    from aioqiwi import TimeRange, QiwiKassa
+
+    async def kassa():
+        async with QiwiKassa("SECRET KEY from p2p.qiwi.com or kassa.qiwi.com") as kassa:
+            sent_invoice = await kassa.issue_invoice(14.88, lifetime=TimeRange(45))
+            # setting lifetime to 44 ahead today [default is 10] 45 - is max
+            print("Url to pay:", sent_invoice.pay_url)
+
+    asyncio.run(kassa())
+
+
+`sent_invoice.pay_url` will redirect us to something like:
+
+.. image:: https://imbt.ga/gO8EzaFItB
+
+
+----------------
+👥 Contributing
+----------------
 
 Contributions are welcome
 
-----------
-Community:
-----------
+------------------------------------------
+👨‍👨‍👦‍👦 Community
+------------------------------------------
 
 `✈️ Telegram
 <https://t.me/joinchat/B2cC_hSIAiYXxqKghdguCA>`_

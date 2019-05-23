@@ -2,8 +2,6 @@
 import sys
 import asyncio
 import logging
-import json
-import importlib
 import typing
 
 from aiohttp import client, web
@@ -26,6 +24,7 @@ from .utils.phone import parse_phone
 from .utils.currency_utils import Currency
 from .webhooks import handler, server
 from .helper import Provider, ChequeTypes, PaymentTypes, IdentificationWidget
+from .mixin import serialize, QiwiMixin
 
 AIOFILES = False
 
@@ -36,79 +35,44 @@ try:
 except ImportError:
     pass
 
-serialize = json.dumps
-
-for json_lib in ["rapidjson", "ujson", "json"]:
-    try:
-        serialize = importlib.import_module(json_lib).dumps
-        break
-    except ImportError:
-        continue
-
-TZD = "03:00"
 _get_loop = asyncio.get_event_loop
 
 logger = logging.getLogger("aioqiwi")
 
 
-class QiwiAccount:
-    def __init__(
-        self,
-        api_hash: str,
-        phone_number: str or int = None,
-        *,
-        request_timeout: float = None,
-        # default preferable arguments:
-        tzd=TZD,
-        loop=None,
-    ):
+class QiwiAccount(QiwiMixin):
+    def __init__(self, api_hash: str, phone_number: str or int = None, loop=None):
         """
-
+        Main class for requests
         :param api_hash: Qiwi unique token given for an account
         :param phone_number: Bind phone number integer or string
-        :param request_timeout: timeout default is 60sec.
-        :param tzd: timezone id
-        :param loop: abstract asyncio event loop, better not pass
         """
-        headers = {
-            "Accept": "application/json",
-            "Content-type": "application/json",
-            "Authorization": f"Bearer {api_hash}",
-        }
-        logger.info(f"Client headers: {headers}")
+        session = self._new_http_session(api_hash)
 
-        timeout = client.ClientTimeout(total=request_timeout or 60)
-        self.__session = client.ClientSession(headers=headers, timeout=timeout)
-
-        self.__get = self.__session.get
-        self.__post = self.__session.post
-        self.__put = self.__session.put
-        self.__delete = self.__session.delete
-        self.__patch = self.__session.patch
+        self.__session = session
+        self.__get = session.get
+        self.__post = session.post
+        self.__put = session.put
+        self.__delete = session.delete
+        self.__patch = session.patch
 
         if phone_number:
             self.phone_number = parse_phone(phone_number)
 
         self.as_model = True
-        self.tzd = tzd
-
         self.__loop = loop or _get_loop()
         self.__handler = handler.Handler(self.__loop)
 
-    # helpers
-    @staticmethod
-    def param_filter(dictionary: dict):
-        return {k: v for k, v in dictionary.items() if v is not None}
-
-    async def __make_return(self, resp, *models, spec_ignore=False):
-        data = await resp.json()
-        if spec_ignore:
-            return utils.ignore_specs_get_list_of_models(data, *models)
-        return utils.json_to_model(data, *models) if self.as_model else resp
-
     async def __check_phone(
-        self, prompt: str = "Phone-related method requested, enter phone number first: "
+        self,
+        prompt: str = "Phone-related method requested, enter phone number first: "
     ):
+        """
+        Check if developer entered phone for initialized class :xcl:
+        :param prompt:
+        :return:
+        """
+
         if not self.phone_number:
             try:
                 print(prompt, end="")
@@ -119,7 +83,6 @@ class QiwiAccount:
                 )
             except ValueError:
                 await self.__check_phone("Enter correctly: ")
-
     # end region
 
     # getMe region
@@ -135,7 +98,7 @@ class QiwiAccount:
             params = params.as_dict()
 
         async with self.__get(url, params=params) as response:
-            return await self.__make_return(response, auth_user.AuthUser)
+            return await self._make_return(response, auth_user.AuthUser)
 
     # end region
 
@@ -150,10 +113,10 @@ class QiwiAccount:
 
         if not identification_class:
             async with self.__get(url) as response:
-                return await self.__make_return(response, identification.Identification)
+                return await self._make_return(response, identification.Identification)
 
         async with self.__post(url, json=identification_class.as_dict()) as response:
-            return await self.__make_return(response, identification.Identification)
+            return await self._make_return(response, identification.Identification)
 
     # end region
 
@@ -204,7 +167,7 @@ class QiwiAccount:
         )
 
         async with self.__get(url, params=params) as response:
-            return await self.__make_return(
+            return await self._make_return(
                 response, history.HistoryList, history.History
             )
 
@@ -243,7 +206,7 @@ class QiwiAccount:
         )
 
         async with self.__get(url, params=params) as response:
-            return await self.__make_return(response, stats.Stats, stats.Payment)
+            return await self._make_return(response, stats.Stats, stats.Payment)
 
     async def cheque(
         self,
@@ -301,10 +264,10 @@ class QiwiAccount:
         ...     async with QiwiAccount('api_hash', '743987937') as client:
         ...         # Register new web-hook
         ...         info = await client.hooks('mysite.domain/webhooks-for-qiwi/')
-        ...         info.hook_id  #-> 'f14vrgb88sr90211mvspg9shightbuggyvnema'
+        ...         info.hook_id  #-> 'f14vrgb88s6a90211m6v6espg9shi9ah9tbug9ayv9nema'
         ...         # Get active webhook information
         ...         info = await client.hooks()  # get active web-hook information
-        ...         info.hook_id  #-> 'f14vrgb88sr90211mvspg9shightbuggyvnema'
+        ...         info.hook_id  #-> 'f14vrgb88s6a90211m6v6espg9shi9ah9tbug9ayv9nema'
         ...         # Ask qiwi to send test webhook
         ...         await client.hooks(send_test_notification=True)
 
@@ -314,13 +277,13 @@ class QiwiAccount:
         :return:
         """
         server_url = url
-        url = Urls.hooks.register
+        url = Urls.Hooks.register
 
         if not server_url and not transactions_type:
-            url = Urls.hooks.test if send_test_notification else Urls.hooks.active
+            url = Urls.Hooks.test if send_test_notification else Urls.Hooks.active
             async with self.__get(url) as response:
                 if not send_test_notification:
-                    return await self.__make_return(response, webhooks.Hooks)
+                    return await self._make_return(response, webhooks.Hooks)
                 else:
                     raise ValueError("Nothing will be done!")
 
@@ -336,7 +299,7 @@ class QiwiAccount:
         :param hook_id: active hook_id
         :return:
         """
-        url = Urls.hooks.delete.format(hook_id)
+        url = Urls.Hooks.delete.format(hook_id)
         async with self.__delete(url) as response:
             return await response.json()
 
@@ -367,15 +330,15 @@ class QiwiAccount:
         :return: balance.Balance object
         """
         await self.__check_phone()
-        url = Urls.balance.balance.format(self.phone_number)
+        url = Urls.Balance.balance.format(self.phone_number)
 
         if not alias:
             async with self.__get(url) as response:
-                return await self.__make_return(
+                return await self._make_return(
                     response, balance.Balance, balance.Account
                 )
 
-        url = Urls.balance.set_new_balance.format(self.phone_number, alias)
+        url = Urls.Balance.set_new_balance.format(self.phone_number, alias)
 
         async with self.__patch(url, data={"defaultAccount": True}) as response:
             return await response.json()
@@ -386,10 +349,10 @@ class QiwiAccount:
         :return: list[Offer]
         """
         await self.__check_phone()
-        url = Urls.balance.available_aliases
+        url = Urls.Balance.available_aliases
 
         async with self.__get(url) as response:
-            return await self.__make_return(response, offer.Offer, spec_ignore=True)
+            return await self._make_return(response, offer.Offer, spec_ignore=True)
 
     # end region
 
@@ -414,7 +377,7 @@ class QiwiAccount:
         :param fields: do not pass !payments.FieldsWidget! use other method *_transaction
         :return:
         """
-        url = Urls.payments.base.format(provider_id)
+        url = Urls.Payments.base.format(provider_id)
 
         ccode = (
             currency.code
@@ -425,7 +388,7 @@ class QiwiAccount:
             self.param_filter(
                 {
                     "id": EasyDate().datetime.utcnow().timestamp().__int__().__str__(),
-                    "sum": {"amount": float(amount), "currency": ccode},
+                    "sum": {"amount": round(float(amount), 2), "currency": ccode},
                     "paymentMethod": {"type": "Account", "accountId": ccode},
                     "fields": fields or {"account": parse_phone(receiver)},
                     "comment": comment,
@@ -434,7 +397,7 @@ class QiwiAccount:
         )
 
         async with self.__post(url, data=data) as response:
-            return await self.__make_return(response, payment.Payment)
+            return await self._make_return(response, payment.Payment)
 
     async def detect_provider(
         self, phone: str or int = None
@@ -460,11 +423,7 @@ class QiwiAccount:
         }
 
         async with self.__get(url, params=params, headers=headers) as response:
-            return await self.__make_return(response, phone_provider.Provider)
-
-    # session-related
-    async def close(self):
-        await self.__session.close()
+            return await self._make_return(response, phone_provider.Provider)
 
     # blocking op
     def start_webhooks(self, *, host="localhost", port=6969, path=None, app=None):
@@ -495,12 +454,16 @@ class QiwiAccount:
     def on(self):
         return self.__handler
 
+    async def close(self):
+        await self.__session.close()
+
     # `async with` block
     async def __aenter__(self):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
+
 
 
 class _Payments:

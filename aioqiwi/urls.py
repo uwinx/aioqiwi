@@ -8,19 +8,19 @@ class Urls:
     stats = history + "/total"
     cheque = QIWI_API_BASE_URL + "payment-history/v1/transactions/{}/cheque/file"
 
-    class hooks:
+    class Hooks:
         register = "https://edge.qiwi.com/payment-notifier/v1/hooks"
         active = register + "/active"
         test = register + "/test"
         delete = register + "/{}"
 
-    class balance:
+    class Balance:
         base = QIWI_API_BASE_URL + "funding-sources/v2/persons/"
         balance = base + "{}/accounts"
         available_aliases = balance + "/offer"
         set_new_balance = balance + "/{}"
 
-    class payments:
+    class Payments:
         base = QIWI_API_BASE_URL + "sinap/api/v2/terms/{}/payments"
         qiwi = base.format(99)
 
