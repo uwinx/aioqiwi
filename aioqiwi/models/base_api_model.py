@@ -12,12 +12,6 @@ def to_dict(cls):
 
 
 class BaseModel:
-    # special design
-    # return whole class as_dict not only param.
-    @classmethod
-    def as_dict(cls):
-        return to_dict(cls)
-
     @property
     def dict_params(self):
         # this shit is dirty hack

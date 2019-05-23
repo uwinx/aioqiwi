@@ -12,8 +12,8 @@ logger = logging.getLogger("aioqiwi")
 
 logger.info(f"Deserialization tool: {deserialize.__name__}")
 
-DEFAULT_QIWI_WEBHOOK_PATH = "/webhooks/qiwi/bills/"
-DEFAULT_QIWI_ROUTER_NAME = "QIWI"
+DEFAULT_QIWI_BILLS_WEBHOOK_PATH = "/webhooks/qiwi/bills/"
+DEFAULT_QIWI_ROUTER_NAME = "QIWI_BILLS"
 
 RESPONSE_TIMEOUT = 55
 
@@ -138,7 +138,7 @@ def setup(secret_key, dispatcher, app: web.Application, path=None):
     app["_check_ip"] = _check_ip
     app["_dispatcher"] = dispatcher
     app.router.add_view(
-        path or DEFAULT_QIWI_WEBHOOK_PATH,
+        path or DEFAULT_QIWI_BILLS_WEBHOOK_PATH,
         BaseWebHookView,
         name=DEFAULT_QIWI_ROUTER_NAME,
     )
