@@ -18,10 +18,6 @@ with open("readme.rst", "r", encoding="utf-8") as f:
     description = f.read()
 
 
-file = WORK_DIR / "requirements.txt"
-cur_requirements = parse_requirements(file, session="cur_session")
-requirements = [str(ir.req) for ir in cur_requirements]
-
 setup(
     name="aioqiwi",
     version="0.0.0.a1",
@@ -39,7 +35,7 @@ setup(
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3.7",
     ],
-    install_requires=requirements,
+    install_requires='aiohttp>=3.5.4',
     package_data={"": ["requirements.txt"]},
     include_package_data=False,
     keywords='qiwi.com api-wrapper api qiwi-api asyncio aiohttp server webhooks',
