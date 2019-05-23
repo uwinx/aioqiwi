@@ -17,9 +17,9 @@ DEFAULT_QIWI_ROUTER_NAME = "QIWI_BILLS"
 
 RESPONSE_TIMEOUT = 55
 
-QIWI_IP_1 = ipaddress.IPv4Address("79.142.16.0/20")
-QIWI_IP_2 = ipaddress.IPv4Address("91.232.230.0/23")
-QIWI_IP_3 = ipaddress.IPv4Address("195.189.100.0/22")
+QIWI_IP_1 = ipaddress.IPv4Network("79.142.16.0/20")
+QIWI_IP_2 = ipaddress.IPv4Network("91.232.230.0/23")
+QIWI_IP_3 = ipaddress.IPv4Network("195.189.100.0/22")
 
 allowed_ips = {QIWI_IP_1, QIWI_IP_2, QIWI_IP_3}
 
@@ -39,6 +39,9 @@ def allow_ip(*ips: typing.Union[str, ipaddress.IPv4Network, ipaddress.IPv4Addres
             allowed_ips.update(ip.hosts())
         else:
             raise ValueError
+
+
+allow_ip(*allowed_ips)
 
 
 class BaseWebHookView(web.View):
