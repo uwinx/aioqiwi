@@ -2,7 +2,8 @@ import asyncio
 import logging
 import uuid
 import base64
-import inspect
+
+from aiohttp import web
 
 from ..urls import Urls
 from ..models import sent_invoice, refund
@@ -133,6 +134,18 @@ class QiwiKassa(QiwiMixin):
 
     def configure_listener(self, app):
         server.setup(self.__api_hash, self.__handler, app)
+
+    def idle(self, host="localhost", port=6969, path=None, app=None):
+        """
+        [WARNING] This is blocking io method
+        :param host: server host
+        :param port: server port that open for tcp/ip trans.
+        :param path: path for qiwi that will send requests
+        :param app: pass web.Application if you want, common-use - aiogram powered webhook-bots
+        :return:
+        """
+        server.setup(self.__handler, app or web.Application(), path)
+        web.run_app(app, host=host, port=port)
 
     # session-related
     async def close(self):

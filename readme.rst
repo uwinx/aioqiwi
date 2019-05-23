@@ -132,7 +132,7 @@ I'm discovering this API, looks funny
     kassa = QiwiKassa('PRIVATE_KEY')
 
     @kassa.on_update(lambda bill: bill.Bill.Amount.currency == 'RUB')
-    async def my_shiny_rubles_handler(bill_update:):
+    async def my_shiny_rubles_handler(bill_update: BillUpdate):
         # do something
         pass
 

@@ -426,7 +426,6 @@ class QiwiAccount(QiwiMixin):
             return await self._make_return(response, phone_provider.Provider)
 
     # blocking op
-    # TODO
     def idle(self, *blocking_funcs, host="localhost", port=6969, path=None, app=None):
         """
         [WARNING] This is blocking io method
@@ -438,8 +437,6 @@ class QiwiAccount(QiwiMixin):
         :param app: pass web.Application if you want, common-use - aiogram powered webhook-bots
         :return:
         """
-        if app is None:
-            app = web.Application()
 
         async def inner_tsk(func, args_, kwargs_):
             if inspect.iscoroutine(func):
@@ -447,20 +444,18 @@ class QiwiAccount(QiwiMixin):
             func(*args_, **kwargs_)
 
         if isinstance(blocking_funcs, (list, tuple, set)):
-            for f in blocking_funcs:
-                self.__loop.create_task(
-                    inner_tsk(
-                        f,
-                        f[1] if len(f) >= 2 else [],
-                        f[2]
-                        if len(f) == 3
-                        else f[1]
-                        if len(f) >= 2 and isinstance(f[1], dict)
-                        else f[2],
-                    )
+            for item in blocking_funcs:
+                args = item[1] if len(item) >= 2 else []
+                kwargs = (
+                    item[2]
+                    if len(item) == 3
+                    else item[1]
+                    if len(item) >= 2 and isinstance(item[1], dict)
+                    else {}
                 )
+                self.__loop.create_task(inner_tsk(item[0], args, kwargs))
 
-        server.setup(self.__handler, app, path)
+        server.setup(self.__handler, app or web.Application(), path)
         web.run_app(app, host=host, port=port)
 
     def configure_for_app(self, app, path=None):
