@@ -73,7 +73,7 @@ Installation
               f"- WHO THE HECK IS `{event.Payment.account}`, HOW DID HE GET OUR CODE?",
               sep="\n",)
 
-    client.start_webhooks(port=6969)
+    client.idle(port=6969)
 
 
 ----------------------
@@ -107,7 +107,7 @@ I'm discovering this API, looks funny
 
     async def kassa():
         async with QiwiKassa("SECRET KEY from p2p.qiwi.com or kassa.qiwi.com") as kassa:
-            sent_invoice = await kassa.issue_invoice(14.88, lifetime=TimeRange(45))
+            sent_invoice = await kassa.new_bill(14.88, lifetime=TimeRange(44))
             # setting lifetime to 44 ahead today [default is 10] 45 - is max
             print("Url to pay:", sent_invoice.pay_url)
 
@@ -119,11 +119,31 @@ I'm discovering this API, looks funny
 .. image:: https://imbt.ga/gO8EzaFItB
 
 
+---------------------------
+💳 Handling bill payments
+---------------------------
+
+
+.. code:: python
+
+
+    from aioqiwi import QiwiKassa, BillUpdate
+
+    kassa = QiwiKassa('PRIVATE_KEY')
+
+    @kassa.on_update(lambda bill: bill.Bill.Amount.currency == 'RUB')
+    async def my_shiny_rubles_handler(bill_update:):
+        # do something
+        pass
+
+    kassa.idle()
+
+
 ----------------
 👥 Contributing
 ----------------
 
-Contributions are welcome
+It'd great if you issue some design components. Meantime api-designs are awful, I know.
 
 ------------------------------------------
 👨‍👨‍👦‍👦 Community

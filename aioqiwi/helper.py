@@ -1,5 +1,7 @@
 from .models.utils import to_lower_camel_case
 
+from enum import Enum
+
 
 class IdentificationWidget:
     birth_date: str
@@ -29,14 +31,14 @@ oms 	Номер полиса ОМС пользователя
         }
 
 
-class PaymentTypes:
+class PaymentTypes(Enum):
     incoming = IN = "IN"
     outgoing = OUT = "OUT"
     qiwi_card = QIWI_CARD = "QIWI_CARD"
     all = ALL = "ALL"
 
 
-class Provider:
+class Provider(Enum):
     """
     99 - Перевод на QIWI Wallet
 

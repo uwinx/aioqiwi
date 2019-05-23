@@ -4,7 +4,13 @@ from .base_api_model import BaseModel
 
 
 @dataclass(init=False)
-class SentInvoice(BaseModel):
+class _CustomFields(BaseModel):
+    def __setattr__(self, key, value):
+        setattr(self, key, value)
+
+
+@dataclass(init=False)
+class Invoice(BaseModel):
     site_id: str
     bill_id: str
 
@@ -27,3 +33,5 @@ class SentInvoice(BaseModel):
     creation_date_time: str
     expiration_date_time: str
     pay_url: str
+
+    CustomFields = _CustomFields

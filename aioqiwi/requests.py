@@ -3,6 +3,7 @@ import sys
 import asyncio
 import logging
 import typing
+import inspect
 
 from aiohttp import client, web
 
@@ -64,8 +65,7 @@ class QiwiAccount(QiwiMixin):
         self.__handler = handler.Handler(self.__loop)
 
     async def __check_phone(
-        self,
-        prompt: str = "Phone-related method requested, enter phone number first: "
+        self, prompt: str = "Phone-related method requested, enter phone number first: "
     ):
         """
         Check if developer entered phone for initialized class :xcl:
@@ -83,6 +83,7 @@ class QiwiAccount(QiwiMixin):
                 )
             except ValueError:
                 await self.__check_phone("Enter correctly: ")
+
     # end region
 
     # getMe region
@@ -154,7 +155,7 @@ class QiwiAccount(QiwiMixin):
         if timerange:
             from_date, to_date = timerange.dates
 
-        params = self.param_filter(
+        params = self._param_filter(
             {
                 "rows": rows,
                 "operation": operation,
@@ -196,7 +197,7 @@ class QiwiAccount(QiwiMixin):
         if timerange:
             from_date, to_date = timerange.dates
 
-        params = self.param_filter(
+        params = self._param_filter(
             {
                 "operation": operation,
                 "sources": sources,
@@ -293,12 +294,15 @@ class QiwiAccount(QiwiMixin):
             resp = await response.json()
             return utils.json_to_model(resp, webhooks.Hooks) if self.as_model else resp
 
-    async def delete_hooks(self, hook_id: str) -> dict:
+    async def delete_hooks(self, hook_id: str = None) -> dict:
         """
         Removes hooks by hook_id if exists
         :param hook_id: active hook_id
         :return:
         """
+        if not hook_id:
+            hook_id = (await self.hooks()).hook_id
+
         url = Urls.Hooks.delete.format(hook_id)
         async with self.__delete(url) as response:
             return await response.json()
@@ -379,13 +383,9 @@ class QiwiAccount(QiwiMixin):
         """
         url = Urls.Payments.base.format(provider_id)
 
-        ccode = (
-            currency.code
-            if isinstance(currency, Currency.currency)
-            else Currency[currency].code
-        )
+        ccode = self.get_currency(currency)
         data = serialize(
-            self.param_filter(
+            self._param_filter(
                 {
                     "id": EasyDate().datetime.utcnow().timestamp().__int__().__str__(),
                     "sum": {"amount": round(float(amount), 2), "currency": ccode},
@@ -409,7 +409,7 @@ class QiwiAccount(QiwiMixin):
         :return:
         """
         url = Urls.providers
-        params = self.param_filter(
+        params = self._param_filter(
             {
                 "phone": self.phone_number or await self.__check_phone()
                 if not phone
@@ -426,9 +426,12 @@ class QiwiAccount(QiwiMixin):
             return await self._make_return(response, phone_provider.Provider)
 
     # blocking op
-    def start_webhooks(self, *, host="localhost", port=6969, path=None, app=None):
+    # TODO
+    def idle(self, *blocking_funcs, host="localhost", port=6969, path=None, app=None):
         """
-        [WARNING] This is blocking io method, be careful
+        [WARNING] This is blocking io method
+        :params blocking_funcs: pass any func and it'll we executed async-ly with run-app
+        PASSING RULE: [FUNC, *ARGS, **KWARGS]
         :param host: server host
         :param port: server port that open for tcp/ip trans.
         :param path: path for qiwi that will send requests
@@ -437,10 +440,30 @@ class QiwiAccount(QiwiMixin):
         """
         if app is None:
             app = web.Application()
+
+        async def inner_tsk(func, args_, kwargs_):
+            if inspect.iscoroutine(func):
+                await func(*args_, **kwargs_)
+            func(*args_, **kwargs_)
+
+        if isinstance(blocking_funcs, (list, tuple, set)):
+            for f in blocking_funcs:
+                self.__loop.create_task(
+                    inner_tsk(
+                        f,
+                        f[1] if len(f) >= 2 else [],
+                        f[2]
+                        if len(f) == 3
+                        else f[1]
+                        if len(f) >= 2 and isinstance(f[1], dict)
+                        else f[2],
+                    )
+                )
+
         server.setup(self.__handler, app, path)
         web.run_app(app, host=host, port=port)
 
-    def configure_webhook(self, app, path=None):
+    def configure_for_app(self, app, path=None):
         """
         If you want to implement your start_webhook execution use this method and get configured listener with
         configured web-view for passed path[see default in webhooks/server.py]
@@ -463,7 +486,6 @@ class QiwiAccount(QiwiMixin):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
-
 
 
 class _Payments:

@@ -25,3 +25,8 @@ class Urls:
         qiwi = base.format(99)
 
     providers = "https://qiwi.com/mobile/detect.action"
+
+    class P2PBillPayments:
+        bill = "https://api.qiwi.com/partner/bill/v1/bills/{}"
+        reject = bill + '/reject'
+        refund = bill + '/refunds/{}'

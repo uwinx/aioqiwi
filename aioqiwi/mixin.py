@@ -4,6 +4,7 @@ import importlib
 from aiohttp import client
 
 from .models import utils
+from .utils.currency_utils import Currency
 
 # helpers
 TZD = "03:00"
@@ -25,7 +26,7 @@ class QiwiMixin:
     as_model = True
 
     @staticmethod
-    def param_filter(dictionary: dict):
+    def _param_filter(dictionary: dict):
         return {k: v for k, v in dictionary.items() if v is not None}
 
     async def _make_return(self, resp, *models, spec_ignore=False):
@@ -48,3 +49,10 @@ class QiwiMixin:
             headers=headers or {}, timeout=timeout, json_serialize=serialize
         )
 
+    @staticmethod
+    def get_currency(currency: str or int or Currency):
+        return (
+            currency.code
+            if isinstance(currency, Currency.currency)
+            else Currency[currency].code
+        )

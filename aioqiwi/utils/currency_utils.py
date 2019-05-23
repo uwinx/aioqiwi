@@ -18,7 +18,11 @@ class BeautifulSum:
         ...
         >>> asyncio.run(foo())
         """
-        self.amount, self.currency = payment_sum.amount, payment_sum.currency
+        if hasattr(payment_sum, 'value'):
+            self.amount = payment_sum.value
+        else:
+            self.amount = payment_sum.amount
+        self.currency = payment_sum.currency
 
     @property
     def human_currency(self) -> cur.Currency:

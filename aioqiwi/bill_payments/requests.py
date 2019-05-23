@@ -1,18 +1,26 @@
+import asyncio
 import logging
 import uuid
 import base64
+import inspect
 
-from ..models import sent_invoice
+from ..urls import Urls
+from ..models import sent_invoice, refund
 from ..mixin import QiwiMixin, serialize
 from ..utils.currency_utils import Currency
 from ..utils.time_utils import TimeRange
 from ..utils.phone import parse_phone
 
+from .handler import Handler
+from . import server
+
+
 logger = logging.getLogger("aioqiwi")
+_get_loop = asyncio.get_event_loop  # noqa
 
 
 class QiwiKassa(QiwiMixin):
-    def __init__(self, api_hash: str):
+    def __init__(self, api_hash: str, loop: asyncio.AbstractEventLoop = None):
         """
         Beta of kassa.qiwi.com currently developing
         :param api_hash: Qiwi unique token given for an account
@@ -20,15 +28,20 @@ class QiwiKassa(QiwiMixin):
         session = self._new_http_session(api_hash)
         self.__session = session
 
+        self.__api_hash = api_hash
+
         self.__get = session.get
         self.__post = session.post
         self.__put = session.put
         self.__delete = session.delete
         self.__patch = session.patch
 
+        self.__loop = loop or _get_loop()
+        self.__handler = Handler(self.__loop)
+
     @staticmethod
     def generate_bill_id():
-        # further monkey-patches are welcome
+        # further monkey-patches are ok
         return (
             base64.urlsafe_b64encode(uuid.uuid3(uuid.uuid4(), "").bytes)
             .decode()
@@ -36,7 +49,7 @@ class QiwiKassa(QiwiMixin):
             .upper()
         )
 
-    async def issue_invoice(
+    async def new_bill(
         self,
         amount: float,
         peer: int or str = None,
@@ -45,7 +58,7 @@ class QiwiKassa(QiwiMixin):
         currency: str or int or Currency = Currency["rub"],
         comment: str = "via aioqiwi",
         bill_id: str = None,
-    ) -> sent_invoice.SentInvoice:
+    ) -> sent_invoice.Invoice:
         """
 
         :param amount: invoice amount rounded down to two decimals
@@ -62,12 +75,12 @@ class QiwiKassa(QiwiMixin):
             if isinstance(currency, Currency.currency)
             else Currency[currency].code
         )
-        url = "https://api.qiwi.com/partner/bill/v1/bills/{bill_id}".format(
-            bill_id=bill_id or self.generate_bill_id()
+        url = Urls.P2PBillPayments.bill.format(
+            bill_id or self.generate_bill_id()
         )
 
         data = serialize(
-            self.param_filter(
+            self._param_filter(
                 {
                     "amount": {"currency": ccode, "value": amount},
                     "comment": comment,
@@ -81,7 +94,45 @@ class QiwiKassa(QiwiMixin):
         )
 
         async with self.__put(data=data, url=url) as response:
-            return await self._make_return(response, sent_invoice.SentInvoice)
+            return await self._make_return(response, sent_invoice.Invoice)
+
+    async def invoice_info(self, bill_id: str) -> sent_invoice.Invoice:
+        url = Urls.P2PBillPayments.bill.format(bill_id)
+
+        async with self.__get(url) as response:
+            return await self._make_return(response, sent_invoice.Invoice)
+
+    async def reject_bill(self, bill_id: str):
+        url = Urls.P2PBillPayments.reject.format(bill_id)
+
+        async with self.__post(url) as response:
+            return await self._make_return(response, sent_invoice.Invoice)
+
+    async def refund(
+            self, bill_id: str, refund_id: str,
+            amount: float = None, currency: str or int = None
+    ) -> refund.Refund:
+        url = Urls.P2PBillPayments.refund.format(bill_id, refund_id)
+
+        if not amount and not currency:
+            async with self.__get(url) as response:
+                return await self._make_return(response, refund.Refund)
+
+        data = serialize(self._param_filter({
+            'amount': {
+                'currency': self.get_currency(currency),
+                'value': amount
+            }
+        }))
+
+        async with self.__put(url, data=data) as response:
+            return await self._make_return(response, refund.Refund)
+
+    def on_update(self) -> Handler.update:
+        return self.__handler.update
+
+    def configure_listener(self, app):
+        server.setup(self.__api_hash, self.__handler, app)
 
     # session-related
     async def close(self):
