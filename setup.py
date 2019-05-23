@@ -14,7 +14,7 @@ if sys.version_info < (3, 7):
     raise RuntimeError("aioqiwi is not compatible for version lower Python 3.7")
 
 
-with open("README.rst", "r", encoding="utf-8") as f:
+with open("readme.rst", "r", encoding="utf-8") as f:
     description = f.read()
 
 
