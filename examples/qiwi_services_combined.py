@@ -1,13 +1,11 @@
 from aiohttp.web import Application
 
-from aioqiwi import (
-    QiwiAccount, QiwiKassa,  # apis
-    QiwiUpdate, BillUpdate,  # web-hook update types
-    BeautifulSum, TimeRange,  # utils
-)
+from aioqiwi.kassa import QiwiKassa, BillUpdate
+from aioqiwi.wallet import QiwiAccount, QiwiUpdate
+from aioqiwi.utils import BeautifulSum, TimeRange
 
 
-qiwi = QiwiAccount("api_hash from https://qiwi.com/api")
+qiwi = QiwiAccount("api_hash from qiwi.com/api")
 kassa = QiwiKassa("secret_key from p2p.qiwi.com")
 app = Application()
 
@@ -36,12 +34,12 @@ async def caren():
     print(bill.pay_url)
 
 
-async def show_my_history_by_the_way(row: int = 1):
+async def show_my_history_by_the_way(rows: int = 1):
     month_ago = TimeRange(-30)
 
-    history = await qiwi.history(row, timerange=month_ago)
+    history = await qiwi.history(rows, timerange=month_ago)
 
-    for o in history.data:
+    for o in history.reversed:  # .reverse is reversed(history.data)
         print(o.type, o.status, BeautifulSum(o.Sum).pretty, sep="|")
 
 

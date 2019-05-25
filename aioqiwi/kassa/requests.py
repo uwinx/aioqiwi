@@ -5,15 +5,15 @@ import base64
 
 from aiohttp import web
 
+from .models import sent_invoice, refund
+from .handler import Handler
+from . import server
+
 from ..urls import Urls
-from ..models import sent_invoice, refund
 from ..mixin import QiwiMixin, serialize
 from ..utils.currency_utils import Currency
 from ..utils.time_utils import TimeRange
 from ..utils.phone import parse_phone
-
-from .handler import Handler
-from . import server
 
 
 logger = logging.getLogger("aioqiwi")
@@ -76,9 +76,7 @@ class QiwiKassa(QiwiMixin):
             if isinstance(currency, Currency.currency)
             else Currency[currency].code
         )
-        url = Urls.P2PBillPayments.bill.format(
-            bill_id or self.generate_bill_id()
-        )
+        url = Urls.P2PBillPayments.bill.format(bill_id or self.generate_bill_id())
 
         data = serialize(
             self._param_filter(
@@ -110,8 +108,11 @@ class QiwiKassa(QiwiMixin):
             return await self._make_return(response, sent_invoice.Invoice)
 
     async def refund(
-            self, bill_id: str, refund_id: str,
-            amount: float = None, currency: str or int = None
+        self,
+        bill_id: str,
+        refund_id: str,
+        amount: float = None,
+        currency: str or int = None,
     ) -> refund.Refund:
         url = Urls.P2PBillPayments.refund.format(bill_id, refund_id)
 
@@ -119,12 +120,11 @@ class QiwiKassa(QiwiMixin):
             async with self.__get(url) as response:
                 return await self._make_return(response, refund.Refund)
 
-        data = serialize(self._param_filter({
-            'amount': {
-                'currency': self.get_currency(currency),
-                'value': amount
-            }
-        }))
+        data = serialize(
+            self._param_filter(
+                {"amount": {"currency": self.get_currency(currency), "value": amount}}
+            )
+        )
 
         async with self.__put(url, data=data) as response:
             return await self._make_return(response, refund.Refund)

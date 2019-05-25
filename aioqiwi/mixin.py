@@ -27,7 +27,7 @@ class QiwiMixin:
 
     @staticmethod
     def _param_filter(dictionary: dict):
-        return {k: v for k, v in dictionary.items() if v is not None}
+        return {k: str(v) for k, v in dictionary.items() if v is not None}
 
     async def _make_return(self, resp, *models, spec_ignore=False):
         data = await resp.json()
@@ -36,17 +36,17 @@ class QiwiMixin:
         return utils.json_to_model(data, *models) if self.as_model else resp
 
     @staticmethod
-    def _new_http_session(api_hash: str, timeout: float or int = None):
+    def _new_http_session(api_hash: str, timeout: float or int = None, *, ctype: str = None, atype: str = None):
         headers = {
-            "Accept": "application/json",
-            "Content-type": "application/json",
-            "Authorization": f"Bearer {api_hash}",
+            "Accept": atype or "application/json",
+            "Content-type": ctype or "application/json",
+            "Authorization": f"Bearer {api_hash}" if api_hash else None,
         }
 
         timeout = client.ClientTimeout(total=timeout or 60)
 
         return client.ClientSession(
-            headers=headers or {}, timeout=timeout, json_serialize=serialize
+            headers=QiwiMixin._param_filter(headers), timeout=timeout, json_serialize=serialize
         )
 
     @staticmethod
@@ -56,3 +56,5 @@ class QiwiMixin:
             if isinstance(currency, Currency.currency)
             else Currency[currency].code
         )
+
+

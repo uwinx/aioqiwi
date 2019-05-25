@@ -7,25 +7,25 @@ import inspect
 
 from aiohttp import client, web
 
-from .urls import Urls
-from .models import (
-    utils,
+from ..urls import Urls
+from ..wallet.models import (
+    webhooks,
+    balance,
+    phone_provider,
     auth_user,
+    offer,
+    payment,
     identification,
     history,
     stats,
-    webhooks,
-    balance,
-    offer,
-    payment,
-    phone_provider,
 )
-from .utils.time_utils import EasyDate, TimeRange
-from .utils.phone import parse_phone
-from .utils.currency_utils import Currency
-from .webhooks import handler, server
-from .helper import Provider, ChequeTypes, PaymentTypes, IdentificationWidget
-from .mixin import serialize, QiwiMixin
+from ..models import utils
+from ..utils.time_utils import EasyDate, TimeRange
+from ..utils.phone import parse_phone
+from ..utils.currency_utils import Currency
+from ..wallet import handler, server
+from ..wallet.helper import Provider, ChequeTypes, PaymentTypes, IdentificationWidget
+from ..mixin import serialize, QiwiMixin
 
 AIOFILES = False
 
@@ -96,7 +96,7 @@ class QiwiAccount(QiwiMixin):
         url = Urls.me
 
         if isinstance(params, auth_user.Me):
-            params = params.as_dict()
+            params = params.dict_params()
 
         async with self.__get(url, params=params) as response:
             return await self._make_return(response, auth_user.AuthUser)
@@ -135,17 +135,17 @@ class QiwiAccount(QiwiMixin):
         offset_id: int = None,
     ) -> history.HistoryList:
         """
-        TODO nicely document this part
         Get payments history from new to old
-        :param rows: rows
-        :param operation: ALL all operations, IN for in incoming payments, OUT outgoing payments, QIWI_CARD (QVC, QVP).
-        :param sources:
-        :param from_date:
-        :param to_date:
-        :param timerange:
-        :param offset_date:
-        :param offset_id:
-        :return:
+        :param rows: Quantity of operations
+        :param operation: one from <IN, ALL, OUT> see aioqiwi.wallet.helper.PaymentTypes
+        :param sources: payment source see aioqiwi.wallet.helper:PaymentSources
+        :param from_date: from date strftime with timezone, pass EasyDate object for convenience or
+                str-formatted datetime `YYYY-MM-DDThh:mm:ssZ` - from docs
+        :param to_date: like from_date but to
+        :param timerange: exclusive argument, pass TimeRange object
+        :param offset_date: offset for previous date [use only with offset_id]
+        :param offset_id: offset id for ... [use only with offset_date]
+        :return: history.History object
         """
 
         await self.__check_phone()
@@ -182,13 +182,14 @@ class QiwiAccount(QiwiMixin):
         timerange: TimeRange = None,
     ) -> stats.Stats:
         """
-        TODO document nicely
-        :param from_date:
-        :param to_date:
-        :param operation:
-        :param sources:
-        :param timerange:
-        :return:
+        Get statistics of payments
+        :param from_date: from date strftime with timezone, pass EasyDate object for convenience or
+                str-formatted datetime `YYYY-MM-DDThh:mm:ssZ` - from docs
+        :param to_date: like from_date but to
+        :param operation: one from <IN, ALL, OUT> see aioqiwi.wallet.helper.PaymentTypes
+        :param sources: payment source see aioqiwi.wallet.helper:PaymentSources
+        :param timerange: exclusive, pass TimeRange object
+        :return: stats object with incoming_total, outgoing_total
         """
 
         await self.__check_phone()
@@ -224,7 +225,6 @@ class QiwiAccount(QiwiMixin):
         :param ftype: return file type JPEG or PDF
         :param destination_dir: path to save
         :param filename: filename to save
-        :return:
         """
         url = Urls.cheque.format(transaction_id)
 
@@ -275,7 +275,7 @@ class QiwiAccount(QiwiMixin):
         :param url: your server endpoint that qiwi will send updates to
         :param transactions_type: 0 => incoming, 1 => outgoing, 2 => all
         :param send_test_notification: qiwi will send you test webhook update
-        :return:
+        :return: Hooks or None
         """
         server_url = url
         url = Urls.Hooks.register
@@ -298,7 +298,7 @@ class QiwiAccount(QiwiMixin):
         """
         Removes hooks by hook_id if exists
         :param hook_id: active hook_id
-        :return:
+        :return: json-response
         """
         if not hook_id:
             hook_id = (await self.hooks()).hook_id
@@ -314,7 +314,7 @@ class QiwiAccount(QiwiMixin):
         NON-API EXCLUSIVE method to `reset` your current webhook details
         :param new_url: service url
         :param transactions_types: 0, 1, 2 is 2 by default
-        :return: hooks active
+        :return: Active Hooks
         """
         active = await self.hooks(None, None)
         if not active:
@@ -322,7 +322,6 @@ class QiwiAccount(QiwiMixin):
 
         await self.delete_hooks(active.hook_id)
         return await self.hooks(new_url, transactions_types)
-
     # end region
 
     # balance related region
@@ -364,7 +363,7 @@ class QiwiAccount(QiwiMixin):
         self,
         amount: float or int,
         receiver: str or int,
-        currency: str or int or Currency = Currency["rub"],
+        currency: str or int or Currency = '648',
         provider_id: int = Provider.QIWI_WALLET,
         comment: str = "via aioqiwi",
         fields: dict = None,
@@ -379,7 +378,7 @@ class QiwiAccount(QiwiMixin):
         :param provider_id: QIWI by default do not change if you are not sure use other method *_transaction
         :param comment: text for comment
         :param fields: do not pass !payments.FieldsWidget! use other method *_transaction
-        :return:
+        :return: Payment (completed)
         """
         url = Urls.Payments.base.format(provider_id)
 
@@ -406,7 +405,7 @@ class QiwiAccount(QiwiMixin):
         Helper for getting phone number's provider id
         :param phone: pass phone number or
                       it will try to get passed phone_number in initialization otherwise ask you to enter
-        :return:
+        :return: Provider object
         """
         url = Urls.providers
         params = self._param_filter(
@@ -492,11 +491,30 @@ class _Payments:
     async def bank_transaction(
         self, amount: float or int, bank_id: int, fields: payment.FieldsWidget or dict
     ):
-        # fields = (
-        #       fields.dict_params if isinstance(fields, payment.FieldsWidget) else fields
-        # )
-        # self.send()
-        ...
+        """{
+                    "id": EasyDate().datetime.utcnow().timestamp().__int__().__str__(),
+                    "sum": {"amount": round(float(amount), 2), "currency": ccode},
+                    "paymentMethod": {"type": "Account", "accountId": ccode},
+                    "fields": fields or {"account": parse_phone(receiver)},
+                    "comment": comment,
+                }"""
+        params = {
+            'id': str(int(EasyDate().datetime.utcnow().timestamp())),
+            'sum': {
+                'currency': '643',
+            }
+        }
+        """id 	String 	Клиентский ID транзакции (максимум 20 цифр). Должен быть уникальным для каждой транзакции и увеличиваться с каждой последующей транзакцией. Для выполнения этих требований рекомендуется задавать равным 1000*(Standard Unix time в секундах).
+sum 	Object 	Объект, содержащий данные о сумме платежа:
+amount 	Decimal 	Сумма
+currency 	String 	Валюта (только 643, рубли)
+source 	String 	Источник фондирования платежа. Допускается только следующее значение:
+account_643 - рублевый счет QIWI Кошелька отправителя
+paymentMethod 	Object 	Объект, определяющий обработку платежа процессингом. Содержит следующие параметры:
+type 	String 	Тип платежа, только Account
+accountId 	String 	Идентификатор счета, только 643.
+fields 	Object 	Объект с параметрами перевода. Допускается только следующий параметр:
+account 	String 	Номер мобильного телефона для пополнения (без префикса 8)"""
 
     async def cellular_transaction(self):
         ...

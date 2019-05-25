@@ -20,7 +20,7 @@ with open("readme.rst", "r", encoding="utf-8") as f:
 
 setup(
     name="aioqiwi",
-    version="0.0.0.a1",
+    version="0.0.1.a2",
     packages=find_packages(exclude=("examples.*", "docs")),
     url="https://github.com/uwinx/aioqiwi",
     license="MIT",

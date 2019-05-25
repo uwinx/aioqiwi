@@ -1,7 +1,8 @@
 from typing import Tuple
 
 from ..utils import currencies as cur
-from ..models import history, updates
+from ..wallet.models import updates
+from ..wallet.models import history
 
 
 class BeautifulSum:

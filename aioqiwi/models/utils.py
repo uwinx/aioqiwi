@@ -64,9 +64,17 @@ def json_to_model(data: dict, model_type, model_to_list=None):
 def ignore_specs_get_list_of_models(data: dict, model) -> List[type("model")]:
     items = []
 
-    for key, val in data.items():
-        if isinstance(val, list):
-            for init_dict in val:
-                items.append(json_to_model(init_dict, model))
+    if isinstance(data, list):
+        for val in data:
+            items.append(json_to_model(val, model))
+
+    elif isinstance(data, dict):
+        for key, val in data.items():
+            if isinstance(val, list):
+                for init_dict in val:
+                    items.append(json_to_model(init_dict, model))
+
+    else:
+        raise ValueError(f'Expected type list or dict, got {type(data)}')
 
     return items

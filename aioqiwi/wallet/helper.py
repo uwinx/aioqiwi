@@ -1,6 +1,6 @@
-from .models.utils import to_lower_camel_case
-
 from enum import Enum
+
+from ..models.utils import to_lower_camel_case
 
 
 class IdentificationWidget:
@@ -36,6 +36,21 @@ class PaymentTypes(Enum):
     outgoing = OUT = "OUT"
     qiwi_card = QIWI_CARD = "QIWI_CARD"
     all = ALL = "ALL"
+
+
+class PaymentSources(Enum):
+    QW_RUB = 'QW_USD'
+    QW_USD = 'QW_USD'
+    QW_EUR = 'QW_EUR'
+    CARD = 'CARD'
+    MK = 'MK'
+
+    __doc__ = """Источники платежа, для отбора. Каждый источник задается как отдельный параметр и нумеруется элементом массива, начиная с нуля (sources[0], sources[1] и т.д.). Допустимые значения:
+QW_RUB - рублевый счет кошелька,
+QW_USD - счет кошелька в долларах,
+QW_EUR - счет кошелька в евро,
+CARD - привязанные и непривязанные к кошельку банковские карты,
+MK - счет мобильного оператора. Если не указаны, учитываются все источники"""
 
 
 class Provider(Enum):

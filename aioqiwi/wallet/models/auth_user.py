@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from .base_api_model import BaseModel
-from .utils import to_lower_camel_case
+from ...models.utils import to_lower_camel_case
+from ...models.base_api_model import BaseModel
 
 
 @dataclass(init=False)

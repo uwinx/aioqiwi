@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from typing import List
 
-from .base_api_model import BaseModel
+from ...models.base_api_model import BaseModel
 
 
 @dataclass(init=False)

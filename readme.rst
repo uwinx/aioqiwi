@@ -34,7 +34,8 @@ Installation
     import asyncio
     from pprint import pprint
 
-    from aioqiwi import QiwiAccount, BeatifulSum
+    from aioqiwi import QiwiAccount
+    from aioqiwi.utils import BeatifulSum
 
     async def qiwi():
         async with QiwiAccount("APIHASH from https://qiwi.com/api") as client:
@@ -59,7 +60,8 @@ Installation
 
 .. code:: python
 
-    from aioqiwi import QiwiUpdate, QiwiAccount, BeautifulSum
+    from aioqiwi.wallet import QiwiUpdate, QiwiAccount
+    from aioqiwi.utils import BeautifulSum
 
     client = QiwiAccount("...")
 
@@ -84,7 +86,8 @@ Installation
 .. code:: python
 
     import asyncio
-    from aioqiwi import QiwiAccount, BeautifulSum
+    from aioqiwi import QiwiAccount
+    from aioqiwi.utils import BeautifulSum
 
     async def txn():
         async with QiwiAccount('...') as client:
@@ -103,7 +106,8 @@ I'm discovering this API, looks funny
 .. code:: python
 
     import asyncio
-    from aioqiwi import TimeRange, QiwiKassa
+    from aioqiwi import QiwiKassa
+    from aioqiwi.utils import TimeRange
 
     async def kassa():
         async with QiwiKassa("SECRET KEY from p2p.qiwi.com or kassa.qiwi.com") as kassa:
@@ -127,7 +131,7 @@ I'm discovering this API, looks funny
 .. code:: python
 
 
-    from aioqiwi import QiwiKassa, BillUpdate
+    from aioqiwi.kassa import QiwiKassa, BillUpdate
 
     kassa = QiwiKassa('PRIVATE_KEY')
 
@@ -138,6 +142,13 @@ I'm discovering this API, looks funny
 
     kassa.idle()
 
+
+--------------------
+🗺 QIWI terminals
+--------------------
+
+**aioqiwi** covers qiwi's `MAPS
+<https://developer.qiwi.com/ru/qiwi-map>`_ api in aioqiwi.terminals module
 
 ----------------
 👥 Contributing

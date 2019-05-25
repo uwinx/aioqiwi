@@ -30,3 +30,7 @@ class Urls:
         bill = "https://api.qiwi.com/partner/bill/v1/bills/{}"
         reject = bill + '/reject'
         refund = bill + '/refunds/{}'
+
+    class Maps:
+        base = "http://edge.qiwi.com/locator/v3/nearest/clusters"
+        ttp_groups = "http://edge.qiwi.com/locator/v3/ttp-groups"
