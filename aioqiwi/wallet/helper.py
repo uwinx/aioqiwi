@@ -92,6 +92,9 @@ class Provider(Enum):
 
 
 class _ChequeTypes:
+    """
+    Check [Cheque]'s output type
+    """
     JPEG = "JPEG"
     PDF = "PDF"
 

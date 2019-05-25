@@ -26,11 +26,19 @@ allowed_ips = {QIWI_IP_1, QIWI_IP_2}
 
 
 def _check_ip(ip: str) -> bool:
+    """
+    Check if ip is allowed to request us
+    :param ip: IP-address
+    :return: address is allowed
+    """
     address = ipaddress.IPv4Address(ip)
     return address in allowed_ips
 
 
 def allow_ip(*ips: typing.Union[str, ipaddress.IPv4Network, ipaddress.IPv4Address]):
+    """
+    Add new ips to allowed
+    """
     for ip in ips:
         if isinstance(ip, ipaddress.IPv4Address):
             allowed_ips.add(ip)
@@ -66,16 +74,16 @@ class BaseWebHookView(View):
         return None, False
 
     async def get(self):
-        self.validate_ip()
-        return Response(text="up")
-
-    async def head(self):
+        """
+        Process GET
+        :return:
+        """
         self.validate_ip()
         return Response(text="up")
 
     async def post(self):
         """
-        Process POST request with validating and further deserialization and resolving
+        Process POST request with validating, further deserialization and resolving
         :return: :class:``
         """
         self.validate_ip()
@@ -88,7 +96,7 @@ class BaseWebHookView(View):
     async def parse_update(self):
         """
         Deserialize update and create new update class
-        :return: :class:``
+        :return: :class:`updated.QiwiUpdate`
         """
         data = await self.request.json()
         return utils.json_to_model(deserialize(data), updates.QiwiUpdate)

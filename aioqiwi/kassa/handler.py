@@ -2,6 +2,9 @@ import asyncio
 
 
 class Handler:
+    """
+    Kassa handler same implementation as in payments.handler
+    """
     def __init__(self, loop: asyncio.AbstractEventLoop):
         self.loop = loop or asyncio.get_event_loop()
         self._handlers = []  # [(callback, *funcs, **kwarg-filters)]

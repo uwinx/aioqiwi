@@ -3,6 +3,9 @@ import re
 
 
 class Handler:
+    """
+    Handler class entry point
+    """
     def __init__(self, loop: asyncio.AbstractEventLoop):
         self.loop = loop or asyncio.get_event_loop()
         self._handlers = []  # [(callback, *funcs, **kwarg-filters)]
@@ -10,6 +13,14 @@ class Handler:
     def payment_event(
         self, *func_filters, comment_regex=None, incoming=None, outgoing=None, **kwargs
     ):
+        """
+        Payments handler
+        :param func_filters: pass your one-argument function, that argument is QiwiUpdate
+        :param comment_regex: filter commentary by regex
+        :param incoming: set filter to incoming payments
+        :param outgoing: set filter to outgoing payments
+        :param kwargs: QiwiUpdate attribute equality
+        """
         filters = func_filters
         txn_types = ["IN", "OUT"]
 

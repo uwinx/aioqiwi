@@ -25,6 +25,9 @@ def to_lower_camel_case(s: str):
 
 
 def _raw_base_json_to_model(data: dict, model):
+    """
+    Raw conversion with control flow
+    """
     model = model()
 
     for key, val in data.items():
@@ -41,6 +44,9 @@ def _raw_base_json_to_model(data: dict, model):
 
 
 def json_to_model(data: dict, model_type, model_to_list=None):
+    """
+    Converts json-type(dict) to model
+    """
     model = model_type()
 
     for key, val in data.items():
@@ -61,7 +67,10 @@ def json_to_model(data: dict, model_type, model_to_list=None):
     return model
 
 
-def ignore_specs_get_list_of_models(data: dict, model) -> List[type("model")]:
+def ignore_specs_get_list_of_models(data: dict or list, model) -> List[type("model")]:
+    """
+    Converts json-array/json to models in list
+    """
     items = []
 
     if isinstance(data, list):

@@ -107,7 +107,11 @@ class QiwiAccount(QiwiMixin):
     async def identification(
         self, identification_class: IdentificationWidget = None
     ) -> identification.Identification:
-        # todo document
+        """
+        Get your current identification status, or pass identificationWidget class to request qiwi to verify you
+        :param identification_class: convenient class for params storing
+        :return: current identification status and request status
+        """
         await self.__check_phone()
 
         url = Urls.identification.format(self.phone_number)
@@ -484,37 +488,7 @@ class QiwiAccount(QiwiMixin):
 
 class _Payments:
     # TODO
-    # some monkey-patch tools for  QiwiAccount.transaction method
+    # some monkey-patch tools for QiwiAccount.transaction method
+    # Here we'll be super-easy-to-use methods, idk now
     def __init__(self, send_function: QiwiAccount.transaction):
         self.send: QiwiAccount.transaction = send_function
-
-    async def bank_transaction(
-        self, amount: float or int, bank_id: int, fields: payment.FieldsWidget or dict
-    ):
-        """{
-                    "id": EasyDate().datetime.utcnow().timestamp().__int__().__str__(),
-                    "sum": {"amount": round(float(amount), 2), "currency": ccode},
-                    "paymentMethod": {"type": "Account", "accountId": ccode},
-                    "fields": fields or {"account": parse_phone(receiver)},
-                    "comment": comment,
-                }"""
-        params = {
-            'id': str(int(EasyDate().datetime.utcnow().timestamp())),
-            'sum': {
-                'currency': '643',
-            }
-        }
-        """id 	String 	Клиентский ID транзакции (максимум 20 цифр). Должен быть уникальным для каждой транзакции и увеличиваться с каждой последующей транзакцией. Для выполнения этих требований рекомендуется задавать равным 1000*(Standard Unix time в секундах).
-sum 	Object 	Объект, содержащий данные о сумме платежа:
-amount 	Decimal 	Сумма
-currency 	String 	Валюта (только 643, рубли)
-source 	String 	Источник фондирования платежа. Допускается только следующее значение:
-account_643 - рублевый счет QIWI Кошелька отправителя
-paymentMethod 	Object 	Объект, определяющий обработку платежа процессингом. Содержит следующие параметры:
-type 	String 	Тип платежа, только Account
-accountId 	String 	Идентификатор счета, только 643.
-fields 	Object 	Объект с параметрами перевода. Допускается только следующий параметр:
-account 	String 	Номер мобильного телефона для пополнения (без префикса 8)"""
-
-    async def cellular_transaction(self):
-        ...

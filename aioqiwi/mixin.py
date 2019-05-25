@@ -12,6 +12,7 @@ TZD = "03:00"
 serialize = json.dumps
 deserialize = json.loads
 
+# get json (d1)e(n2)coder
 for json_lib in ["rapidjson", "ujson", "json"]:
     try:
         serialize = importlib.import_module(json_lib).dumps
@@ -27,9 +28,21 @@ class QiwiMixin:
 
     @staticmethod
     def _param_filter(dictionary: dict):
+        """
+        pop NoneType values and convert everything to str, designed?for=params
+        :param dictionary: source dict
+        :return: filtered dict
+        """
         return {k: str(v) for k, v in dictionary.items() if v is not None}
 
     async def _make_return(self, resp, *models, spec_ignore=False):
+        """
+        Convenient way to do return FOR ME
+        :param resp: server-response
+        :param models: api-model
+        :param spec_ignore: ignore keys in response get list-like value and return list of model:`value`
+        :return: models in model | list of models
+        """
         data = await resp.json()
         if spec_ignore:
             return utils.ignore_specs_get_list_of_models(data, *models)
@@ -37,6 +50,14 @@ class QiwiMixin:
 
     @staticmethod
     def _new_http_session(api_hash: str, timeout: float or int = None, *, ctype: str = None, atype: str = None):
+        """
+        Create new instance of ClientSession
+        :param api_hash: private key
+        :param timeout: client timeout
+        :param ctype: content-type
+        :param atype: accept-type
+        :return: aiohttp.client.ClientSession
+        """
         headers = {
             "Accept": atype or "application/json",
             "Content-type": ctype or "application/json",
@@ -51,6 +72,11 @@ class QiwiMixin:
 
     @staticmethod
     def get_currency(currency: str or int or Currency):
+        """
+        Get currency lazy method
+        :param currency: currency like ISO-4217, 3-len curr-codes
+        :return: currency-code
+        """
         return (
             currency.code
             if isinstance(currency, Currency.currency)

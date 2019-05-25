@@ -10,6 +10,9 @@
     :target: https://www.python.org/
     :alt: Python-version
 
+
+**Qiwi payments for humans(for healthy humans)**
+
 ------------
 Installation
 ------------
@@ -160,6 +163,7 @@ It'd great if you issue some design components. Meantime api-designs are awful, 
 👨‍👨‍👦‍👦 Community
 ------------------------------------------
 
+**Our FLEK$$$Y**
 `✈️ Telegram
 <https://t.me/joinchat/B2cC_hSIAiYXxqKghdguCA>`_
 

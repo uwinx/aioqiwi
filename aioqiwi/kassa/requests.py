@@ -42,7 +42,10 @@ class QiwiKassa(QiwiMixin):
 
     @staticmethod
     def generate_bill_id():
-        # further monkey-patches are ok
+        """
+        Generates unique bill_id
+        However you can implement your generator :idk:
+        """
         return (
             base64.urlsafe_b64encode(uuid.uuid3(uuid.uuid4(), "").bytes)
             .decode()
@@ -61,7 +64,7 @@ class QiwiKassa(QiwiMixin):
         bill_id: str = None,
     ) -> sent_invoice.Invoice:
         """
-
+        Create new bill
         :param amount: invoice amount rounded down to two decimals
         :param peer: phone number to which invoice issued
         :param peer_email: client's e-mail
@@ -95,13 +98,23 @@ class QiwiKassa(QiwiMixin):
         async with self.__put(data=data, url=url) as response:
             return await self._make_return(response, sent_invoice.Invoice)
 
-    async def invoice_info(self, bill_id: str) -> sent_invoice.Invoice:
+    async def bill_info(self, bill_id: str) -> sent_invoice.Invoice:
+        """
+        Get info about bill
+        :param bill_id: bill's id in your system
+        :return: kassa.models.Invoice instance
+        """
         url = Urls.P2PBillPayments.bill.format(bill_id)
 
         async with self.__get(url) as response:
             return await self._make_return(response, sent_invoice.Invoice)
 
     async def reject_bill(self, bill_id: str):
+        """
+        Reject bill
+        :param bill_id: bill's id in your system
+        :return: kassa.models.Invoice
+        """
         url = Urls.P2PBillPayments.reject.format(bill_id)
 
         async with self.__post(url) as response:
@@ -114,6 +127,14 @@ class QiwiKassa(QiwiMixin):
         amount: float = None,
         currency: str or int = None,
     ) -> refund.Refund:
+        """
+        Refund user's money, pass amount and currency to refund, else will get info about refund
+        :param bill_id: bill's id in your system
+        :param refund_id: refund id
+        :param amount: amount to refund
+        :param currency: currency
+        :return: Refund class instance
+        """
         url = Urls.P2PBillPayments.refund.format(bill_id, refund_id)
 
         if not amount and not currency:
@@ -130,10 +151,19 @@ class QiwiKassa(QiwiMixin):
             return await self._make_return(response, refund.Refund)
 
     def on_update(self) -> Handler.update:
+        """
+        Return function, use it as a decorator
+        :return:
+        """
         return self.__handler.update
 
-    def configure_listener(self, app):
-        server.setup(self.__api_hash, self.__handler, app)
+    def configure_listener(self, app, path=None):
+        """
+        Pass aiohttp.web.Application and aioqiwi.kassa.server will bind itself to your app
+        :param app:
+        :return:
+        """
+        server.setup(self.__api_hash, self.__handler, app, path=path)
 
     def idle(self, host="localhost", port=6969, path=None, app=None):
         """
