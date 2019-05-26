@@ -10,9 +10,9 @@ from .models.partner import Partner
 
 class QiwiMaps(QiwiMixin):
     def __init__(self):
-        self.__session = self._new_http_session('', atype='application/json;charser=UTF-8')
+        self._session = self._new_http_session('', atype='application/json;charser=UTF-8')
 
-        self.__get = self.__session.get
+        self._get = self._session.get
 
     async def terminals(
             self,
@@ -54,7 +54,7 @@ class QiwiMaps(QiwiMixin):
                 'ttpGroups': terminal_groups
             })
 
-        async with self.__get(url, params=params) as resp:
+        async with self._get(url, params=params) as resp:
             return await self._make_return(resp, Terminal, spec_ignore=True)
 
     async def partners(self) -> typing.List[Partner]:
@@ -65,12 +65,12 @@ class QiwiMaps(QiwiMixin):
 
         url = Urls.Maps.ttp_groups
 
-        async with self.__get(url) as response:
+        async with self._get(url) as response:
             return await self._make_return(response, spec_ignore=True)
 
     # session-related
     async def close(self):
-        await self.__session.close()
+        await self._session.close()
 
     # `async with` block
     async def __aenter__(self):

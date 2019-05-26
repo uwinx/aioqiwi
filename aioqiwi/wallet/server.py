@@ -102,7 +102,7 @@ class BaseWebHookView(View):
         return utils.json_to_model(deserialize(data), updates.QiwiUpdate)
 
     async def _resolve_update(self, update: updates.QiwiUpdate):
-        for callback, funcs, attr_eq in self.request.app["_dispatcher"]._handlers:
+        for callback, funcs, attr_eq in self.request.app["_dispatcher"].handlers:
             if all(func(update) for func in funcs):
                 if attr_eq:
                     if all(

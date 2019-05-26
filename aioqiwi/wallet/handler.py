@@ -8,7 +8,7 @@ class Handler:
     """
     def __init__(self, loop: asyncio.AbstractEventLoop):
         self.loop = loop or asyncio.get_event_loop()
-        self._handlers = []  # [(callback, *funcs, **kwarg-filters)]
+        self.handlers = []  # [(callback, *funcs, **kwarg-filters)]
 
     def payment_event(
         self, *func_filters, comment_regex=None, incoming=None, outgoing=None, **kwargs
@@ -46,6 +46,14 @@ class Handler:
             if txn_types:
                 ffilters.append(lambda update: update.payment.type in txn_types)
 
-            self._handlers.append((event_handler, ffilters, kwargs))
+            self.handlers.append((event_handler, ffilters, kwargs))
 
         return decorator
+
+    @property
+    def registered_handlers(self):
+        return [
+            f'{"".join(func.__name__ for func in filters)}(where {", ".join(f"{k}={v}" for k, v in kfilter.items())})'
+            f'->will execute callback: <{callback.__name__}>'
+            for callback, filters, kfilter in self.handlers
+        ]

@@ -50,12 +50,12 @@ class Wallet(QiwiMixin):
         """
         session = self._new_http_session(api_hash)
 
-        self.__session = session
-        self.__get = session.get
-        self.__post = session.post
-        self.__put = session.put
-        self.__delete = session.delete
-        self.__patch = session.patch
+        self._session = session
+        self._get = session.get
+        self._post = session.post
+        self._put = session.put
+        self._delete = session.delete
+        self._patch = session.patch
 
         if phone_number:
             self.phone_number = parse_phone(phone_number)
@@ -63,8 +63,8 @@ class Wallet(QiwiMixin):
             self.phone_number = None
 
         self.as_model = True
-        self.__loop = loop or _get_loop()
-        self.__handler = handler.Handler(self.__loop)
+        self.loop = loop or _get_loop()
+        self._handler = handler.Handler(self.loop)
 
     async def __check_phone(
         self, prompt: str = "Phone-related method requested, enter phone number first: "
@@ -80,7 +80,7 @@ class Wallet(QiwiMixin):
                 print(prompt, end="")
                 self.phone_number = parse_phone(
                     (
-                        await self.__loop.run_in_executor(None, sys.stdin.readline)
+                        await self.loop.run_in_executor(None, sys.stdin.readline)
                     ).rstrip()
                 )
             except ValueError:
@@ -443,7 +443,7 @@ class Wallet(QiwiMixin):
         :return:
         """
 
-        async def inner_tsk(func, args_, kwargs_):
+        async def inner_task(func, args_, kwargs_):
             if inspect.iscoroutine(func):
                 await func(*args_, **kwargs_)
             func(*args_, **kwargs_)
@@ -458,9 +458,9 @@ class Wallet(QiwiMixin):
                     if len(item) >= 2 and isinstance(item[1], dict)
                     else {}
                 )
-                self.__loop.create_task(inner_tsk(item[0], args, kwargs))
+                self.loop.create_task(inner_task(item[0], args, kwargs))
 
-        server.setup(self.__handler, app or web.Application(), path)
+        server.setup(self._handler, app or web.Application(), path)
         web.run_app(app, host=host, port=port)
 
     def configure_for_app(self, app, path=None):
@@ -470,12 +470,12 @@ class Wallet(QiwiMixin):
         :param app: aiohttp.web.Application initialized
         :param path:
         """
-        server.setup(self.__handler, app, path)
+        server.setup(self._handler, app, path)
 
     # updates handler
     @property
     def on(self):
-        return self.__handler
+        return self._handler
 
     async def close(self):
         await self.__session.close()

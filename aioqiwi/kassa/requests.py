@@ -27,18 +27,18 @@ class QiwiKassa(QiwiMixin):
         :param api_hash: Qiwi unique token given for an account
         """
         session = self._new_http_session(api_hash)
-        self.__session = session
+        self._session = session
 
         self.__api_hash = api_hash
 
-        self.__get = session.get
-        self.__post = session.post
-        self.__put = session.put
-        self.__delete = session.delete
-        self.__patch = session.patch
+        self._get = session.get
+        self._post = session.post
+        self._put = session.put
+        self._delete = session.delete
+        self._patch = session.patch
 
-        self.__loop = loop or _get_loop()
-        self.__handler = Handler(self.__loop)
+        self.loop = loop or _get_loop()
+        self._handler = Handler(self.loop)
 
     @staticmethod
     def generate_bill_id():
@@ -95,7 +95,7 @@ class QiwiKassa(QiwiMixin):
             )
         )
 
-        async with self.__put(data=data, url=url) as response:
+        async with self._put(data=data, url=url) as response:
             return await self._make_return(response, sent_invoice.Invoice)
 
     async def bill_info(self, bill_id: str) -> sent_invoice.Invoice:
@@ -106,7 +106,7 @@ class QiwiKassa(QiwiMixin):
         """
         url = Urls.P2PBillPayments.bill.format(bill_id)
 
-        async with self.__get(url) as response:
+        async with self._get(url) as response:
             return await self._make_return(response, sent_invoice.Invoice)
 
     async def reject_bill(self, bill_id: str):
@@ -117,7 +117,7 @@ class QiwiKassa(QiwiMixin):
         """
         url = Urls.P2PBillPayments.reject.format(bill_id)
 
-        async with self.__post(url) as response:
+        async with self._post(url) as response:
             return await self._make_return(response, sent_invoice.Invoice)
 
     async def refund(
@@ -138,7 +138,7 @@ class QiwiKassa(QiwiMixin):
         url = Urls.P2PBillPayments.refund.format(bill_id, refund_id)
 
         if not amount and not currency:
-            async with self.__get(url) as response:
+            async with self._get(url) as response:
                 return await self._make_return(response, refund.Refund)
 
         data = serialize(
@@ -147,7 +147,7 @@ class QiwiKassa(QiwiMixin):
             )
         )
 
-        async with self.__put(url, data=data) as response:
+        async with self._put(url, data=data) as response:
             return await self._make_return(response, refund.Refund)
 
     def on_update(self) -> Handler.update:
@@ -155,7 +155,7 @@ class QiwiKassa(QiwiMixin):
         Return function, use it as a decorator
         :return:
         """
-        return self.__handler.update
+        return self._handler.update
 
     def configure_listener(self, app, path=None):
         """
@@ -163,7 +163,7 @@ class QiwiKassa(QiwiMixin):
         :param app:
         :return:
         """
-        server.setup(self.__api_hash, self.__handler, app, path=path)
+        server.setup(self.__api_hash, self._handler, app, path=path)
 
     def idle(self, host="localhost", port=6969, path=None, app=None):
         """
@@ -174,12 +174,12 @@ class QiwiKassa(QiwiMixin):
         :param app: pass web.Application if you want, common-use - aiogram powered webhook-bots
         :return:
         """
-        server.setup(self.__handler, app or web.Application(), path)
+        server.setup(self._handler, app or web.Application(), path)
         web.run_app(app, host=host, port=port)
 
     # session-related
     async def close(self):
-        await self.__session.close()
+        await self._session.close()
 
     # `async with` block
     async def __aenter__(self):
