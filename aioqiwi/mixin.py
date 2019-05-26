@@ -44,6 +44,7 @@ class QiwiMixin:
         :return: models in model | list of models
         """
         data = await resp.json()
+        print(data)
         if spec_ignore:
             return utils.ignore_specs_get_list_of_models(data, *models)
         return utils.json_to_model(data, *models) if self.as_model else resp

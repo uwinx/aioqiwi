@@ -1,5 +1,6 @@
 import sys
 import pathlib
+import re
 
 from setuptools import find_packages, setup
 
@@ -14,13 +15,20 @@ if sys.version_info < (3, 7):
     raise RuntimeError("aioqiwi is not compatible for version lower Python 3.7")
 
 
+code = (WORK_DIR / 'aioqiwi' / '__init__.py').read_text('utf-8')
+try:
+    version = re.findall(r"^__version__ = '([^']+)'\r?$", code, re.M)[0]
+except IndexError:
+    raise RuntimeError('Unable to determine version.')
+
+
 with open("readme.rst", "r", encoding="utf-8") as f:
     description = f.read()
 
 
 setup(
     name="aioqiwi",
-    version="0.0.1.a2",
+    version=version,
     packages=find_packages(exclude=("examples.*", "docs")),
     url="https://github.com/uwinx/aioqiwi",
     license="MIT",

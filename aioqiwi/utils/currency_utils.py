@@ -19,7 +19,7 @@ class BeautifulSum:
         ...
         >>> asyncio.run(foo())
         """
-        if hasattr(payment_sum, 'value'):
+        if hasattr(payment_sum, "value"):
             self.amount = payment_sum.value
         else:
             self.amount = payment_sum.amount
@@ -77,7 +77,7 @@ class Currency:
         :return: Currency object
         """
         try:
-            if currency_code.isdigit():
+            if isinstance(currency_code, int) or currency_code.isdigit():
                 return cur.described.get(cur.codes_number[str(currency_code)])
             else:
                 return cur.described.get(currency_code.upper())

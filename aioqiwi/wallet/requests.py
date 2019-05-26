@@ -41,7 +41,7 @@ _get_loop = asyncio.get_event_loop
 logger = logging.getLogger("aioqiwi")
 
 
-class QiwiAccount(QiwiMixin):
+class Wallet(QiwiMixin):
     def __init__(self, api_hash: str, phone_number: str or int = None, loop=None):
         """
         Main class for requests
@@ -59,6 +59,8 @@ class QiwiAccount(QiwiMixin):
 
         if phone_number:
             self.phone_number = parse_phone(phone_number)
+        else:
+            self.phone_number = None
 
         self.as_model = True
         self.__loop = loop or _get_loop()
@@ -179,7 +181,7 @@ class QiwiAccount(QiwiMixin):
     async def stats(
         self,
         *,
-        from_date: str or EasyDate = EasyDate().go_back(90),
+        from_date: str or EasyDate = EasyDate().go_back(89),
         to_date: str or EasyDate = EasyDate(),
         operation: str = "ALL",
         sources: list = None,
@@ -266,7 +268,7 @@ class QiwiAccount(QiwiMixin):
         """
         Register and manage your web-hooks
         >>> async def main():
-        ...     async with QiwiAccount('api_hash', '743987937') as client:
+        ...     async with Wallet('api_hash', '743987937') as client:
         ...         # Register new web-hook
         ...         info = await client.hooks('mysite.domain/webhooks-for-qiwi/')
         ...         info.hook_id  #-> 'f14vrgb88s6a90211m6v6espg9shi9ah9tbug9ayv9nema'
@@ -490,5 +492,5 @@ class _Payments:
     # TODO
     # some monkey-patch tools for QiwiAccount.transaction method
     # Here we'll be super-easy-to-use methods, idk now
-    def __init__(self, send_function: QiwiAccount.transaction):
-        self.send: QiwiAccount.transaction = send_function
+    def __init__(self, send_function: Wallet.transaction):
+        self.send: Wallet.transaction = send_function

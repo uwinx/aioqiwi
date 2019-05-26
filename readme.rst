@@ -24,7 +24,7 @@ Installation
 ---------------
 🔸 Dependencies
 ---------------
-**aioqiwi** uses only aiohttp and that's enough, but in case you want increase perfomance of serialization and deserialization, you can install ``ujson`` or ``rapidjson``
+**aioqiwi** uses only ``aiohttp`` and that's enough, but in case you want increase perfomance of serialization and deserialization, you can install ``ujson`` or ``rapidjson``
 
 
 -------------------
@@ -35,19 +35,14 @@ Installation
 .. code:: python
 
     import asyncio
-    from pprint import pprint
 
-    from aioqiwi import QiwiAccount
-    from aioqiwi.utils import BeatifulSum
+    from aioqiwi import Wallet
+    from aioqiwi.utils import BeautifulSum
 
     async def qiwi():
-        async with QiwiAccount("APIHASH from https://qiwi.com/api") as client:
-            me = await cl.me()
-            pprint(me.params_dict)
-
-            client.phone_number = '78787878723'
-            balance = await client.balance()
-
+        async with Wallet("TOKEN from https://qiwi.com/api") as wallet:
+            wallet.phone_number = '+7878787878'  # phone number is not required by default, but some methods need it
+            balance = await wallet.balance()
             print("ACCOUNTS:")
             for acc in balance.Accounts:
                 print(acc.alias, BeautifulSum(acc.Balance).pretty)
@@ -63,22 +58,22 @@ Installation
 
 .. code:: python
 
-    from aioqiwi.wallet import QiwiUpdate, QiwiAccount
+    from aioqiwi.wallet import QiwiUpdate, Wallet
     from aioqiwi.utils import BeautifulSum
 
-    client = QiwiAccount("...")
+    wallet = Wallet("...")
 
-    @client.on.payment_event(incoming=True)
+    @wallet.on.payment_event(incoming=True)
     async def outgoing_payments_handler(event: QiwiUpdate):
         print(f"{event.Payment.account} sent you {BeautifulSum(event.Payment).pretty}")
 
-    @client.on.payment_event(incoming=True, comment_regex=r"^(special_code|another_special_code)+$")
+    @wallet.on.payment_event(incoming=True, comment_regex=r"^(special_code|another_special_code)+$")
     async def outgoing_payments_handler(event: QiwiUpdate):
         print("*tovarish mayor suspiciously*",
               f"- WHO THE HECK IS `{event.Payment.account}`, HOW DID HE GET OUR CODE?",
               sep="\n",)
 
-    client.idle(port=6969)
+    wallet.idle(port=6969)
 
 
 ----------------------
@@ -89,21 +84,21 @@ Installation
 .. code:: python
 
     import asyncio
-    from aioqiwi import QiwiAccount
+    from aioqiwi import Wallet
     from aioqiwi.utils import BeautifulSum
 
     async def txn():
-        async with QiwiAccount('...') as client:
-            payment = await client.transaction(14.88, '+7899966669')
+        async with Wallet('...') as wallet:
+            payment = await wallet.transaction(14.88, '+7899966669')
             print(BeautifulSum(payment.Sum).pretty)
 
     asyncio.run(txn())
 
 
 ---------------------------------------------------
-🔥 Qiwi new API p2p transactions(bill-payments)[RAW]
+🔥 Qiwi new API p2p transactions(bill-payments)
 ---------------------------------------------------
-I'm discovering this API, looks funny
+Cool qiwi bills!
 
 
 .. code:: python
@@ -153,6 +148,13 @@ I'm discovering this API, looks funny
 **aioqiwi** covers qiwi's `MAPS
 <https://developer.qiwi.com/ru/qiwi-map>`_ api in aioqiwi.terminals module
 
+
+-------------------
+❓ HOW-TOs
+-------------------
+
+You can find examples in ``examples/`` directory in github repository. For start examples above should be enough.
+
 ----------------
 👥 Contributing
 ----------------
@@ -163,7 +165,7 @@ It'd great if you issue some design components. Meantime api-designs are awful, 
 👨‍👨‍👦‍👦 Community
 ------------------------------------------
 
-**Our FLEK$$$Y**
+**Our group**
 `✈️ Telegram
 <https://t.me/joinchat/B2cC_hSIAiYXxqKghdguCA>`_
 
