@@ -161,6 +161,7 @@ Cool qiwi bills!
 
         async def json():
             async with Wallet('...') as wallet:
+                wallet.as_model = False
                 print(await wallet.balance())
 
         asyncio.run(json())
