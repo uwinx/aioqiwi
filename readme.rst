@@ -105,11 +105,10 @@ Cool qiwi bills!
 
     import asyncio
     from aioqiwi import QiwiKassa
-    from aioqiwi.utils import TimeRange
 
     async def kassa():
         async with QiwiKassa("SECRET KEY from p2p.qiwi.com or kassa.qiwi.com") as kassa:
-            sent_invoice = await kassa.new_bill(14.88, lifetime=TimeRange(44))
+            sent_invoice = await kassa.new_bill(14.88, lifetime=44)
             # setting lifetime to 44 ahead today [default is 10] 45 - is max
             print("Url to pay:", sent_invoice.pay_url)
 
@@ -147,6 +146,24 @@ Cool qiwi bills!
 
 **aioqiwi** covers qiwi's `MAPS
 <https://developer.qiwi.com/ru/qiwi-map>`_ api in aioqiwi.terminals module
+
+
+--------------------
+🍼 Non-model returns
+--------------------
+
+
+.. code:: python
+
+
+        import asyncio
+        from aioqiwi import Wallet
+
+        async def json():
+            async with Wallet('...') as wallet:
+                print(await wallet.balance())
+
+        asyncio.run(json())
 
 
 -------------------

@@ -1,11 +1,11 @@
-# todo: error handling
 import sys
 import asyncio
 import logging
-import typing
 import inspect
+import datetime
+from typing import List, Union
 
-from aiohttp import client, web
+from aiohttp import web
 
 from ..urls import Urls
 from ..wallet.models import (
@@ -19,36 +19,37 @@ from ..wallet.models import (
     history,
     stats,
 )
-from ..models import utils
-from ..utils.time_utils import EasyDate, TimeRange
 from ..utils.phone import parse_phone
-from ..utils.currency_utils import Currency
+from ..utils.currencies.currency_utils import Currency
+from ..utils.requests import params_filter, new_http_session, get_currency
 from ..wallet import handler, server
-from ..wallet.helper import Provider, ChequeTypes, PaymentTypes, IdentificationWidget
-from ..mixin import serialize, QiwiMixin
+from ..wallet.enums import Provider, ChequeTypes, PaymentTypes, IdentificationWidget
+from ..requests import serialize, Requests
 
-AIOFILES = False
 
 try:
     import aiofiles
-
-    AIOFILES = True
 except ImportError:
-    pass
+    aiofile = None
 
 _get_loop = asyncio.get_event_loop
 
 logger = logging.getLogger("aioqiwi")
 
 
-class Wallet(QiwiMixin):
-    def __init__(self, api_hash: str, phone_number: str or int = None, loop=None):
+class Wallet(Requests):
+    """
+    Qiwi wallet api methods including webhooks
+    """
+    def __init__(
+        self, api_hash: str, phone_number: Union[str, int] = None, loop=None
+    ):
         """
         Main class for requests
         :param api_hash: Qiwi unique token given for an account
         :param phone_number: Bind phone number integer or string
         """
-        session = self._new_http_session(api_hash)
+        session = new_http_session(api_hash)
 
         self._session = session
         self._get = session.get
@@ -79,17 +80,16 @@ class Wallet(QiwiMixin):
             try:
                 print(prompt, end="")
                 self.phone_number = parse_phone(
-                    (
-                        await self.loop.run_in_executor(None, sys.stdin.readline)
-                    ).rstrip()
+                    (await self.loop.run_in_executor(None, sys.stdin.readline)).rstrip()
                 )
             except ValueError:
                 await self.__check_phone("Enter correctly: ")
-
     # end region
 
     # getMe region
-    async def me(self, params: dict or auth_user.Me = None) -> auth_user.AuthUser:
+    async def me(
+        self, params: Union[dict, auth_user.Me] = None
+    ) -> auth_user.AuthUser:
         """
         Get authorization info
         :param params:
@@ -100,9 +100,8 @@ class Wallet(QiwiMixin):
         if isinstance(params, auth_user.Me):
             params = params.dict_params()
 
-        async with self.__get(url, params=params) as response:
+        async with self._get(url, params=params) as response:
             return await self._make_return(response, auth_user.AuthUser)
-
     # end region
 
     # identification region
@@ -119,25 +118,23 @@ class Wallet(QiwiMixin):
         url = Urls.identification.format(self.phone_number)
 
         if not identification_class:
-            async with self.__get(url) as response:
+            async with self._get(url) as response:
                 return await self._make_return(response, identification.Identification)
 
-        async with self.__post(url, json=identification_class.as_dict()) as response:
+        async with self._post(url, json=identification_class.as_dict()) as response:
             return await self._make_return(response, identification.Identification)
-
     # end region
 
-    # region payment statistics and history
+    # region payment statistics, payment-cheques, history
     async def history(
         self,
         rows: int,
         *,
         operation: str = "ALL",
         sources: list = None,
-        from_date: str or EasyDate = None,
-        to_date: str or EasyDate = None,
-        timerange: TimeRange = None,
-        offset_date: str or EasyDate = None,
+        from_date: Union[str, datetime.datetime] = None,
+        to_date: Union[str, datetime.datetime] = None,
+        offset_date: Union[str, datetime.datetime] = None,
         offset_id: int = None,
     ) -> history.HistoryList:
         """
@@ -145,10 +142,8 @@ class Wallet(QiwiMixin):
         :param rows: Quantity of operations
         :param operation: one from <IN, ALL, OUT> see aioqiwi.wallet.helper.PaymentTypes
         :param sources: payment source see aioqiwi.wallet.helper:PaymentSources
-        :param from_date: from date strftime with timezone, pass EasyDate object for convenience or
-                str-formatted datetime `YYYY-MM-DDThh:mm:ssZ` - from docs
-        :param to_date: like from_date but to
-        :param timerange: exclusive argument, pass TimeRange object
+        :param from_date: from date strftime with timezone (formatted datetime `YYYY-MM-DDThh:mm:ssTZ`)
+        :param to_date: till date
         :param offset_date: offset for previous date [use only with offset_id]
         :param offset_id: offset id for ... [use only with offset_date]
         :return: history.History object
@@ -158,22 +153,19 @@ class Wallet(QiwiMixin):
 
         url = Urls.history.format(self.phone_number)
 
-        if timerange:
-            from_date, to_date = timerange.dates
-
-        params = self._param_filter(
+        params = params_filter(
             {
                 "rows": rows,
                 "operation": operation,
                 "sources": sources,
-                "startDate": str(from_date) if from_date else None,
-                "endDate": str(to_date) if to_date else None,
-                "nextTxnDate": str(offset_date) if offset_date else None,
+                "startDate": self.parse_date(from_date) if from_date else None,
+                "endDate": self.parse_date(to_date) if to_date else None,
+                "nextTxnDate": self.parse_date(offset_date) if offset_date else None,
                 "nextTxnId": offset_id,
             }
         )
 
-        async with self.__get(url, params=params) as response:
+        async with self._get(url, params=params) as response:
             return await self._make_return(
                 response, history.HistoryList, history.History
             )
@@ -181,11 +173,11 @@ class Wallet(QiwiMixin):
     async def stats(
         self,
         *,
-        from_date: str or EasyDate = EasyDate().go_back(89),
-        to_date: str or EasyDate = EasyDate(),
+        from_date: Union[str, datetime.datetime] = datetime.datetime.now()
+        - datetime.timedelta(days=89),
+        to_date: Union[str, datetime.datetime] = datetime.datetime.now(),
         operation: str = "ALL",
         sources: list = None,
-        timerange: TimeRange = None,
     ) -> stats.Stats:
         """
         Get statistics of payments
@@ -194,26 +186,22 @@ class Wallet(QiwiMixin):
         :param to_date: like from_date but to
         :param operation: one from <IN, ALL, OUT> see aioqiwi.wallet.helper.PaymentTypes
         :param sources: payment source see aioqiwi.wallet.helper:PaymentSources
-        :param timerange: exclusive, pass TimeRange object
         :return: stats object with incoming_total, outgoing_total
         """
 
         await self.__check_phone()
         url = Urls.stats.format(self.phone_number)
 
-        if timerange:
-            from_date, to_date = timerange.dates
-
-        params = self._param_filter(
+        params = params_filter(
             {
                 "operation": operation,
                 "sources": sources,
-                "startDate": str(from_date),
-                "endDate": str(to_date),
+                "startDate": self.parse_date(from_date),
+                "endDate": self.parse_date(to_date),
             }
         )
 
-        async with self.__get(url, params=params) as response:
+        async with self._get(url, params=params) as response:
             return await self._make_return(response, stats.Stats, stats.Payment)
 
     async def cheque(
@@ -242,19 +230,18 @@ class Wallet(QiwiMixin):
 
         params = {"type": transaction_type.upper(), "format": ftype.upper()}
 
-        async with self.__get(url, params=params) as response:
+        async with self._get(url, params=params) as response:
             destination = (
                 f"{destination_dir}/{filename or transaction_id}.{ftype.lower()}"
             )
             binary = await response.read()
-            if AIOFILES:
+            if aiofiles:
                 async with aiofiles.open(destination, "wb") as fp:
                     await fp.write(binary)
             else:
                 with open(destination, "wb") as fp:
                     fp.write(binary)
             return destination
-
     # end region
 
     # region web-hooks
@@ -267,17 +254,6 @@ class Wallet(QiwiMixin):
     ) -> webhooks.Hooks:
         """
         Register and manage your web-hooks
-        >>> async def main():
-        ...     async with Wallet('api_hash', '743987937') as client:
-        ...         # Register new web-hook
-        ...         info = await client.hooks('mysite.domain/webhooks-for-qiwi/')
-        ...         info.hook_id  #-> 'f14vrgb88s6a90211m6v6espg9shi9ah9tbug9ayv9nema'
-        ...         # Get active webhook information
-        ...         info = await client.hooks()  # get active web-hook information
-        ...         info.hook_id  #-> 'f14vrgb88s6a90211m6v6espg9shi9ah9tbug9ayv9nema'
-        ...         # Ask qiwi to send test webhook
-        ...         await client.hooks(send_test_notification=True)
-
         :param url: your server endpoint that qiwi will send updates to
         :param transactions_type: 0 => incoming, 1 => outgoing, 2 => all
         :param send_test_notification: qiwi will send you test webhook update
@@ -288,7 +264,7 @@ class Wallet(QiwiMixin):
 
         if not server_url and not transactions_type:
             url = Urls.Hooks.test if send_test_notification else Urls.Hooks.active
-            async with self.__get(url) as response:
+            async with self._get(url) as response:
                 if not send_test_notification:
                     return await self._make_return(response, webhooks.Hooks)
                 else:
@@ -296,9 +272,8 @@ class Wallet(QiwiMixin):
 
         params = {"hookType": 1, "param": server_url, "txnType": transactions_type or 2}
 
-        async with self.__put(url, params=params) as response:
-            resp = await response.json()
-            return utils.json_to_model(resp, webhooks.Hooks) if self.as_model else resp
+        async with self._put(url, params=params) as response:
+            return await self._make_return(response, webhooks.Hooks)
 
     async def delete_hooks(self, hook_id: str = None) -> dict:
         """
@@ -310,7 +285,7 @@ class Wallet(QiwiMixin):
             hook_id = (await self.hooks()).hook_id
 
         url = Urls.Hooks.delete.format(hook_id)
-        async with self.__delete(url) as response:
+        async with self._delete(url) as response:
             return await response.json()
 
     async def new_hooks(
@@ -342,17 +317,17 @@ class Wallet(QiwiMixin):
         url = Urls.Balance.balance.format(self.phone_number)
 
         if not alias:
-            async with self.__get(url) as response:
+            async with self._get(url) as response:
                 return await self._make_return(
                     response, balance.Balance, balance.Account
                 )
 
         url = Urls.Balance.set_new_balance.format(self.phone_number, alias)
 
-        async with self.__patch(url, data={"defaultAccount": True}) as response:
+        async with self._patch(url, data={"defaultAccount": True}) as response:
             return await response.json()
 
-    async def available_balances(self) -> typing.List[offer.Offer]:
+    async def available_balances(self) -> List[offer.Offer]:
         """
         Get aliases of available offers
         :return: list[Offer]
@@ -360,16 +335,16 @@ class Wallet(QiwiMixin):
         await self.__check_phone()
         url = Urls.Balance.available_aliases
 
-        async with self.__get(url) as response:
+        async with self._get(url) as response:
             return await self._make_return(response, offer.Offer, spec_ignore=True)
-
     # end region
 
+    # payments region
     async def transaction(
         self,
-        amount: float or int,
-        receiver: str or int,
-        currency: str or int or Currency = '648',
+        amount: Union[int, float],
+        receiver: Union[int, str],
+        currency: Union[Currency, str, int] = "648",
         provider_id: int = Provider.QIWI_WALLET,
         comment: str = "via aioqiwi",
         fields: dict = None,
@@ -388,11 +363,11 @@ class Wallet(QiwiMixin):
         """
         url = Urls.Payments.base.format(provider_id)
 
-        ccode = self.get_currency(currency)
+        ccode = get_currency(currency)
         data = serialize(
-            self._param_filter(
+            params_filter(
                 {
-                    "id": EasyDate().datetime.utcnow().timestamp().__int__().__str__(),
+                    "id": datetime.datetime.utcnow().timestamp().__int__().__str__(),
                     "sum": {"amount": round(float(amount), 2), "currency": ccode},
                     "paymentMethod": {"type": "Account", "accountId": ccode},
                     "fields": fields or {"account": parse_phone(receiver)},
@@ -401,11 +376,11 @@ class Wallet(QiwiMixin):
             )
         )
 
-        async with self.__post(url, data=data) as response:
+        async with self._post(url, data=data) as response:
             return await self._make_return(response, payment.Payment)
 
     async def detect_provider(
-        self, phone: str or int = None
+        self, phone: Union[str, int] = None
     ) -> phone_provider.Provider:
         """
         Helper for getting phone number's provider id
@@ -413,8 +388,8 @@ class Wallet(QiwiMixin):
                       it will try to get passed phone_number in initialization otherwise ask you to enter
         :return: Provider object
         """
-        url = Urls.providers
-        params = self._param_filter(
+        url = Urls.Payments.providers
+        params = params_filter(
             {
                 "phone": self.phone_number or await self.__check_phone()
                 if not phone
@@ -427,10 +402,11 @@ class Wallet(QiwiMixin):
             "Content-type": "application/x-www-form-urlencoded",
         }
 
-        async with self.__get(url, params=params, headers=headers) as response:
+        async with self._get(url, params=params, headers=headers) as response:
             return await self._make_return(response, phone_provider.Provider)
+    # end region
 
-    # blocking op
+    # blocking op idle/setup(run)
     def idle(self, *blocking_funcs, host="localhost", port=6969, path=None, app=None):
         """
         [WARNING] This is blocking io method
@@ -471,6 +447,7 @@ class Wallet(QiwiMixin):
         :param path:
         """
         server.setup(self._handler, app, path)
+    # end region
 
     # updates handler
     @property
@@ -478,7 +455,7 @@ class Wallet(QiwiMixin):
         return self._handler
 
     async def close(self):
-        await self.__session.close()
+        await self._session.close()
 
     # `async with` block
     async def __aenter__(self):
@@ -490,7 +467,6 @@ class Wallet(QiwiMixin):
 
 class _Payments:
     # TODO
-    # some monkey-patch tools for QiwiAccount.transaction method
-    # Here we'll be super-easy-to-use methods, idk now
+    # some tools for QiwiAccount.transaction method
     def __init__(self, send_function: Wallet.transaction):
         self.send: Wallet.transaction = send_function

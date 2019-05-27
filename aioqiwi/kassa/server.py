@@ -5,10 +5,10 @@ import logging
 from aiohttp import web
 
 from .models import updates
-from .crypto import get_auth_key
+from .crypto import hmac_key
 
 from ..models import utils
-from ..mixin import deserialize
+from ..requests import deserialize
 
 logger = logging.getLogger("aioqiwi")
 
@@ -51,10 +51,10 @@ class BaseWebHookView(web.View):
         sha256 = self.request.headers.get("X-Api-Signature-SHA256")
         secret = self.request.app.get("_secret_key")
         bill = deserialize(await self.request.json()).get("bill", {})
-        # rough __get_item__
+
         try:
             return (
-                get_auth_key(
+                hmac_key(
                     secret,
                     bill["amount"],
                     bill["status"],
@@ -88,14 +88,6 @@ class BaseWebHookView(web.View):
         # Not allowed and can't get client IP
         return None, False
 
-    async def get(self):
-        self.validate_ip()
-        return web.Response(text="ok")
-
-    async def head(self):
-        self.validate_ip()
-        return web.Response(text="ok")
-
     async def post(self):
         """
         Process POST request with validating and further deserialization and resolving
@@ -110,7 +102,7 @@ class BaseWebHookView(web.View):
             return web.json_response(
                 data={"error": "0"},
                 status=200,
-                headers={"Content-type": "application/json"}
+                headers={"Content-type": "application/json"},
             )
 
         return web.Response(status=0, headers={"Content-type": "application/json"})

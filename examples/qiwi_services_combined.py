@@ -21,7 +21,7 @@ async def kassa_update(bill: BillUpdate):
 
 
 async def caren():
-    lifetime = TimeRange(30)
+    lifetime = 30  # days
 
     bill = await kassa.new_bill(
         14.88,
@@ -35,9 +35,7 @@ async def caren():
 
 
 async def show_my_history_by_the_way(rows: int = 1):
-    month_ago = TimeRange(-30)
-
-    history = await qiwi.history(rows, timerange=month_ago)
+    history = await qiwi.history(rows)
 
     for o in history.reversed:  # .reverse is reversed(history.data)
         print(o.type, o.status, BeautifulSum(o.Sum).pretty, sep="|")

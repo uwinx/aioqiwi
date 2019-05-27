@@ -1,16 +1,18 @@
 import typing
 
 from ..urls import Urls
-from ..mixin import QiwiMixin
+from ..requests import Requests
 
 from .models.polygon import Polygon
 from .models.terminal import Terminal
 from .models.partner import Partner
 
+from ..utils.requests import new_http_session, params_filter
 
-class QiwiMaps(QiwiMixin):
+
+class QiwiMaps(Requests):
     def __init__(self):
-        self._session = self._new_http_session('', atype='application/json;charser=UTF-8')
+        self._session = new_http_session('', atype='application/json;charser=UTF-8')
 
         self._get = self._session.get
 
@@ -42,7 +44,7 @@ class QiwiMaps(QiwiMixin):
         url = Urls.Maps.base
 
         params = \
-            self._param_filter({
+            params_filter({
                 **polygon.dict,
                 'zoom': zoom,
                 'activeWithinMinutes': pop_if_inactive_x_mins,

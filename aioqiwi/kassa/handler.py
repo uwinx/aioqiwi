@@ -14,7 +14,7 @@ class Handler:
         filters = func_filters
 
         def decorator(event_handler):
-            self._handlers.append((event_handler, filters, kwargs))
+            self.handlers.append((event_handler, filters, kwargs))
 
         return decorator
 

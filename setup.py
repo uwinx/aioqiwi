@@ -1,4 +1,3 @@
-import sys
 import pathlib
 import re
 
@@ -10,10 +9,6 @@ except ImportError:
     from pip._internal.req import parse_requirements
 
 WORK_DIR = pathlib.Path(__file__).parent
-
-if sys.version_info < (3, 7):
-    raise RuntimeError("aioqiwi is not compatible for version lower Python 3.7")
-
 
 code = (WORK_DIR / 'aioqiwi' / '__init__.py').read_text('utf-8')
 try:
@@ -29,7 +24,7 @@ with open("readme.rst", "r", encoding="utf-8") as f:
 setup(
     name="aioqiwi",
     version=version,
-    packages=find_packages(exclude=("examples.*", "docs")),
+    packages=find_packages(exclude=("examples.*", "test.*", "docs", 'test')),
     url="https://github.com/uwinx/aioqiwi",
     license="MIT",
     author="pascal",

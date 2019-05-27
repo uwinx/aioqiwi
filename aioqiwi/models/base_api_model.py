@@ -13,6 +13,9 @@ def to_dict(cls):
 
 class BaseModel:
     @property
-    def dict_params(self):
-        # this shit is dirty hack
+    def dict_params(self) -> dict:
+        """
+        Get Mapping of public attributes of inherited class
+        :return: dict
+        """
         return to_dict(self)

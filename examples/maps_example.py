@@ -1,7 +1,9 @@
+# install geopy
+
 import asyncio
 
 from aioqiwi.terminals import Polygon, QiwiMaps
-from aioqiwi.terminals.utils import get_distance
+from geopy.distance import distanse
 
 
 async def qiwi_maps():
@@ -12,7 +14,9 @@ async def qiwi_maps():
         terminals = await maps.terminals(polygon, zoom=12, cache_terminals=True)
 
         for terminal in terminals:
-            print(f'{terminal.terminal_id:<10} is {get_distance(terminal.Coordinate.latlon, my_lat_lon):.2f} m. away')
+            print(
+                f"{terminal.terminal_id:<10} is {distanse(terminal.Coordinate.latlon, my_lat_lon).km:.2f} m. away"
+            )
 
 
 asyncio.run(qiwi_maps())

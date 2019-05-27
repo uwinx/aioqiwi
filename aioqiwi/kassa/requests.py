@@ -1,7 +1,9 @@
 import asyncio
 import logging
+import datetime
 import uuid
 import base64
+from typing import Union
 
 from aiohttp import web
 
@@ -10,23 +12,22 @@ from .handler import Handler
 from . import server
 
 from ..urls import Urls
-from ..mixin import QiwiMixin, serialize
-from ..utils.currency_utils import Currency
-from ..utils.time_utils import TimeRange
+from ..requests import Requests, serialize
+from ..utils.currencies.currency_utils import Currency
 from ..utils.phone import parse_phone
-
+from ..utils.requests import new_http_session, params_filter, get_currency
 
 logger = logging.getLogger("aioqiwi")
 _get_loop = asyncio.get_event_loop  # noqa
 
 
-class QiwiKassa(QiwiMixin):
+class QiwiKassa(Requests):
     def __init__(self, api_hash: str, loop: asyncio.AbstractEventLoop = None):
         """
         Beta of kassa.qiwi.com currently developing
         :param api_hash: Qiwi unique token given for an account
         """
-        session = self._new_http_session(api_hash)
+        session = new_http_session(api_hash)
         self._session = session
 
         self.__api_hash = api_hash
@@ -56,10 +57,10 @@ class QiwiKassa(QiwiMixin):
     async def new_bill(
         self,
         amount: float,
-        peer: int or str = None,
+        peer: Union[str, int] = None,
         peer_email: str = None,
-        lifetime: TimeRange = TimeRange(10),
-        currency: str or int or Currency = Currency["rub"],
+        lifetime: Union[int, datetime.datetime] = 10,
+        currency: Union[str, int, Currency] = Currency["rub"],
         comment: str = "via aioqiwi",
         bill_id: str = None,
     ) -> sent_invoice.Invoice:
@@ -68,25 +69,23 @@ class QiwiKassa(QiwiMixin):
         :param amount: invoice amount rounded down to two decimals
         :param peer: phone number to which invoice issued
         :param peer_email: client's e-mail
-        :param lifetime: invoice due date, pass TimeRange class which is cool and convenient
+        :param lifetime: invoice due date pass int for `days` representation
         :param currency: pass Currency object or integer code like <845> of currency or str code like <'USD'>
         :param comment: invoice commentary
         :param bill_id: unique invoice identifier in merchant's system
         :return: SentInvoice if success
         """
-        ccode = (
-            currency.code
-            if isinstance(currency, Currency.currency)
-            else Currency[currency].code
-        )
         url = Urls.P2PBillPayments.bill.format(bill_id or self.generate_bill_id())
 
+        if isinstance(lifetime, int):
+            lifetime = datetime.datetime.now() + datetime.timedelta(days=lifetime)
+
         data = serialize(
-            self._param_filter(
+            params_filter(
                 {
-                    "amount": {"currency": ccode, "value": amount},
+                    "amount": {"currency": get_currency(currency), "value": amount},
                     "comment": comment,
-                    "expirationDateTime": lifetime.to_date.today,
+                    "expirationDateTime": self.parse_date(lifetime),
                     "customer": {"phone": parse_phone(peer), "account": peer_email}
                     if peer and peer_email
                     else {},
@@ -142,8 +141,8 @@ class QiwiKassa(QiwiMixin):
                 return await self._make_return(response, refund.Refund)
 
         data = serialize(
-            self._param_filter(
-                {"amount": {"currency": self.get_currency(currency), "value": amount}}
+            params_filter(
+                {"amount": {"currency": get_currency(currency), "value": amount}}
             )
         )
 
@@ -161,6 +160,7 @@ class QiwiKassa(QiwiMixin):
         """
         Pass aiohttp.web.Application and aioqiwi.kassa.server will bind itself to your app
         :param app:
+        :param path: your endpoint, see default in aioqiwi.kassa.server.py:L~:start:
         :return:
         """
         server.setup(self.__api_hash, self._handler, app, path=path)

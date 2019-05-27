@@ -1,8 +1,9 @@
 from typing import Tuple
 
-from ..utils import currencies as cur
-from ..wallet.models import updates
-from ..wallet.models import history
+from . import currencies_parsed as cur
+
+from ...wallet.models import updates
+from ...wallet.models import history
 
 
 class BeautifulSum:
@@ -13,9 +14,12 @@ class BeautifulSum:
         :param payment_sum: object `sum` from history or qiwi-update objects
 
         .. code-block:: python3
+        >>> import asyncio
+        >>> from aioqiwi import Wallet
+        >>>
         >>> async def foo():
-        ...     async with QiwiAccount('my_hash', '') as client:
-        ...         return BeautifulSum((await client.history(20)).data[-1]).humanize
+        ...     async with Wallet('my_hash', '') as client:
+        ...         print(BeautifulSum((await client.history(20)).data[-1]).humanize)
         ...
         >>> asyncio.run(foo())
         """
@@ -55,7 +59,7 @@ class BeautifulSum:
 
 class Currency:
     """
-    Easy to use class to get info abot currency
+    Easy to use class to get info abuot currency
     >>> usd = Currency['840']
     >>> usd
     ... Currency(code='USD', decimal_digits=2, name='US Dollar', name_plural='US dollars', rounding=0, symbol='$', symbol_native='$')

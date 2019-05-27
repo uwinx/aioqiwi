@@ -6,7 +6,7 @@ from aiohttp.web import View, Response, Application, HTTPUnauthorized
 
 from ..wallet.models import updates
 from ..models import utils
-from ..mixin import deserialize
+from ..requests import deserialize
 from ..wallet.handler import Handler
 
 
@@ -72,14 +72,6 @@ class BaseWebHookView(View):
 
         # Not allowed and can't get client IP
         return None, False
-
-    async def get(self):
-        """
-        Process GET
-        :return:
-        """
-        self.validate_ip()
-        return Response(text="up")
 
     async def post(self):
         """

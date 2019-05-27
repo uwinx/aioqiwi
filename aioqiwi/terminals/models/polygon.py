@@ -1,8 +1,4 @@
-from ..utils import get_distance
-
-
 class Polygon:
-    # actually creates diagonal line on map
     def __init__(self, lat_lon_pair_nw: tuple, lat_lon_pair_se: tuple):
         self.lat_nw, self.lon_nw = lat_lon_pair_nw
         self.lat_se, self.lon_se = lat_lon_pair_se
@@ -13,7 +9,3 @@ class Polygon:
     @property
     def dict(self):
         return {k: str(double) for k, double in self._dict.items()}
-
-    @property
-    def diagonal(self):
-        return get_distance((self.lat_nw, self.lon_nw), (self.lat_se, self.lon_se))

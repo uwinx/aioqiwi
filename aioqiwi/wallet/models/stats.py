@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List
 
 from ...models.base_api_model import BaseModel
-from ...utils.currency_utils import Currency
+from aioqiwi.utils.currencies.currency_utils import Currency
 
 
 @dataclass(init=False)
