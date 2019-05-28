@@ -46,11 +46,11 @@ class PaymentSources(Enum):
     CARD - привязанные и непривязанные к кошельку банковские карты,
     MK - счет мобильного оператора. Если не указаны, учитываются все источники"""
 
-    QW_RUB = 'QW_USD'
-    QW_USD = 'QW_USD'
-    QW_EUR = 'QW_EUR'
-    CARD = 'CARD'
-    MK = 'MK'
+    QW_RUB = "QW_USD"
+    QW_USD = "QW_USD"
+    QW_EUR = "QW_EUR"
+    CARD = "CARD"
+    MK = "MK"
 
 
 class Provider(Enum):
@@ -95,6 +95,7 @@ class _ChequeTypes:
     """
     Check [Cheque]'s output type
     """
+
     JPEG = "JPEG"
     PDF = "PDF"
 

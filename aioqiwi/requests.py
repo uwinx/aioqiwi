@@ -1,10 +1,12 @@
 import json
 import importlib
+import logging
 
 from .models import utils
 
 # DEFAULT MOSCOW-TIMEZONE
 MOSCOW_TZD = "03:00"
+logger = logging.getLogger('aioqiwi')
 
 serialize = json.dumps
 deserialize = json.loads
@@ -30,11 +32,21 @@ class Requests:
         :param resp: server-response
         :param models: api-model
         :param spec_ignore: ignore keys in response get list-like value and return list of model:`value`
-        :return: models in model | list of models
+        :return: models in model | list of models | model
         """
-        data = deserialize(await resp.read())
+        data = await resp.read()
 
-        ret_func = utils.ignore_specs_get_list_of_models if spec_ignore else utils.json_to_model
+        try:
+            data = deserialize(data)
+        except TypeError as exc:
+            logger.error("%s exc." % exc.with_traceback())
+            return data, resp
+
+        ret_func = (
+            utils.ignore_specs_get_list_of_models
+            if spec_ignore
+            else utils.json_to_model
+        )
         return ret_func(data, *models) if self.as_model else data
 
     def parse_date(self, date):

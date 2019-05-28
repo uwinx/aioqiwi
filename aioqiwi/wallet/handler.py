@@ -6,6 +6,7 @@ class Handler:
     """
     Handler class entry point
     """
+
     def __init__(self, loop: asyncio.AbstractEventLoop):
         self.loop = loop or asyncio.get_event_loop()
         self.handlers = []  # [(callback, *funcs, **kwarg-filters)]
@@ -54,6 +55,6 @@ class Handler:
     def registered_handlers(self):
         return [
             f'{"".join(func.__name__ for func in filters)}(where {", ".join(f"{k}={v}" for k, v in kfilter.items())})'
-            f'->will execute callback: <{callback.__name__}>'
+            f"->will execute callback: <{callback.__name__}>"
             for callback, filters, kfilter in self.handlers
         ]

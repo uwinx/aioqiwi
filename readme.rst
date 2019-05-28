@@ -13,6 +13,8 @@
 
 **Qiwi payments for humans(for healthy humans)**
 
+Supports most of `qiwi <https://qiwi.com>`_ apis: `qiwi-maps <https://github.com/QIWI-API/qiwi-map>`_, `bills <https://developer.qiwi.com/en/bill-payments/>`_, `wallet <https://developer.qiwi.com/en/qiwi-wallet-personal/>`_
+
 ------------
 Installation
 ------------
@@ -64,11 +66,11 @@ Installation
     wallet = Wallet("...")
 
     @wallet.on.payment_event(incoming=True)
-    async def outgoing_payments_handler(event: QiwiUpdate):
+    async def payments_handler(event: QiwiUpdate):
         print(f"{event.Payment.account} sent you {BeautifulSum(event.Payment).pretty}")
 
     @wallet.on.payment_event(incoming=True, comment_regex=r"^(special_code|another_special_code)+$")
-    async def outgoing_payments_handler(event: QiwiUpdate):
+    async def secret_payments_handler(event: QiwiUpdate):
         print("*tovarish mayor suspiciously*",
               f"- WHO THE HECK IS `{event.Payment.account}`, HOW DID HE GET OUR CODE?",
               sep="\n",)
@@ -148,9 +150,9 @@ Cool qiwi bills!
 <https://developer.qiwi.com/ru/qiwi-map>`_ api in aioqiwi.terminals module
 
 
---------------------
-🍼 Non-model returns
---------------------
+-----------------------------
+🍼 Non-model returns(json)
+-----------------------------
 
 
 .. code:: python
@@ -179,11 +181,19 @@ You can find examples in ``examples/`` directory in github repository. For start
 
 It'd great if you issue some design components. Meantime api-designs are awful, I know.
 
+
+---------------------------
+🔧 TODOs
+---------------------------
+
+- **Error handling** 🔥
+- **Tests** 🔥
+- **Documentation**
+
 ------------------------------------------
 👨‍👨‍👦‍👦 Community
 ------------------------------------------
 
-**Our group**
+**My group**
 `✈️ Telegram
 <https://t.me/joinchat/B2cC_hSIAiYXxqKghdguCA>`_
-

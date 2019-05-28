@@ -12,21 +12,21 @@ from ..utils.requests import new_http_session, params_filter
 
 class QiwiMaps(Requests):
     def __init__(self):
-        self._session = new_http_session('', atype='application/json;charser=UTF-8')
+        self._session = new_http_session("", atype="application/json;charser=UTF-8")
 
         self._get = self._session.get
 
     async def terminals(
-            self,
-            polygon: Polygon,
-            zoom: int = None,
-            pop_if_inactive_x_mins: int = 30,
-            include_partners: bool = None,
-            partners_ids: list = None,
-            cache_terminals: bool = None,
-            card_terminals: bool = None,
-            identification_types: int = None,
-            terminal_groups: list = None
+        self,
+        polygon: Polygon,
+        zoom: int = None,
+        pop_if_inactive_x_mins: int = 30,
+        include_partners: bool = None,
+        partners_ids: list = None,
+        cache_terminals: bool = None,
+        card_terminals: bool = None,
+        identification_types: int = None,
+        terminal_groups: list = None,
     ) -> typing.List[Terminal]:
         """
         Get map of terminals sent for passed polygon with additional params
@@ -43,18 +43,19 @@ class QiwiMaps(Requests):
         """
         url = Urls.Maps.base
 
-        params = \
-            params_filter({
+        params = params_filter(
+            {
                 **polygon.dict,
-                'zoom': zoom,
-                'activeWithinMinutes': pop_if_inactive_x_mins,
-                'withRefillWallet': include_partners,
-                'ttpIds': partners_ids,
-                'cacheAllowed': cache_terminals,
-                'cardAllowed': card_terminals,
-                'identificationTypes': identification_types,
-                'ttpGroups': terminal_groups
-            })
+                "zoom": zoom,
+                "activeWithinMinutes": pop_if_inactive_x_mins,
+                "withRefillWallet": include_partners,
+                "ttpIds": partners_ids,
+                "cacheAllowed": cache_terminals,
+                "cardAllowed": card_terminals,
+                "identificationTypes": identification_types,
+                "ttpGroups": terminal_groups,
+            }
+        )
 
         async with self._get(url, params=params) as resp:
             return await self._make_return(resp, Terminal, spec_ignore=True)

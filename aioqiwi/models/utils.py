@@ -84,6 +84,6 @@ def ignore_specs_get_list_of_models(data: dict or list, model) -> List[type("mod
                     items.append(json_to_model(init_dict, model))
 
     else:
-        raise ValueError(f'Expected type list or dict, got {type(data)}')
+        raise ValueError(f"Expected type list or dict, got {type(data)}")
 
     return items

@@ -2,7 +2,7 @@ from aiohttp.web import Application
 
 from aioqiwi.kassa import QiwiKassa, BillUpdate
 from aioqiwi.wallet import Wallet, QiwiUpdate
-from aioqiwi.utils import BeautifulSum, TimeRange
+from aioqiwi.utils import BeautifulSum
 
 
 qiwi = Wallet("api_hash from qiwi.com/api")

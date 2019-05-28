@@ -28,7 +28,9 @@ def get_currency(currency: typing.Union[str, int, Currency]):
     )
 
 
-def new_http_session(api_hash: str, timeout: float or int = None, *, ctype: str = None, atype: str = None):
+def new_http_session(
+    api_hash: str, timeout: float or int = None, *, ctype: str = None, atype: str = None
+):
     """
     Create new instance of ClientSession
     :param api_hash: private key

@@ -3,8 +3,12 @@ class Polygon:
         self.lat_nw, self.lon_nw = lat_lon_pair_nw
         self.lat_se, self.lon_se = lat_lon_pair_se
 
-        self._dict = {'latNW': self.lat_nw, 'lngNW': self.lon_nw,
-                      'latSE': self.lat_se, 'lngSE': self.lon_se}
+        self._dict = {
+            "latNW": self.lat_nw,
+            "lngNW": self.lon_nw,
+            "latSE": self.lat_se,
+            "lngSE": self.lon_se,
+        }
 
     @property
     def dict(self):

@@ -41,9 +41,8 @@ class Wallet(Requests):
     """
     Qiwi wallet api methods including webhooks
     """
-    def __init__(
-        self, api_hash: str, phone_number: Union[str, int] = None, loop=None
-    ):
+
+    def __init__(self, api_hash: str, phone_number: Union[str, int] = None, loop=None):
         """
         Main class for requests
         :param api_hash: Qiwi unique token given for an account
@@ -84,12 +83,11 @@ class Wallet(Requests):
                 )
             except ValueError:
                 await self.__check_phone("Enter correctly: ")
+
     # end region
 
     # getMe region
-    async def me(
-        self, params: Union[dict, auth_user.Me] = None
-    ) -> auth_user.AuthUser:
+    async def me(self, params: Union[dict, auth_user.Me] = None) -> auth_user.AuthUser:
         """
         Get authorization info
         :param params:
@@ -102,6 +100,7 @@ class Wallet(Requests):
 
         async with self._get(url, params=params) as response:
             return await self._make_return(response, auth_user.AuthUser)
+
     # end region
 
     # identification region
@@ -123,6 +122,7 @@ class Wallet(Requests):
 
         async with self._post(url, json=identification_class.as_dict()) as response:
             return await self._make_return(response, identification.Identification)
+
     # end region
 
     # region payment statistics, payment-cheques, history
@@ -242,6 +242,7 @@ class Wallet(Requests):
                 with open(destination, "wb") as fp:
                     fp.write(binary)
             return destination
+
     # end region
 
     # region web-hooks
@@ -303,6 +304,7 @@ class Wallet(Requests):
 
         await self.delete_hooks(active.hook_id)
         return await self.hooks(new_url, transactions_types)
+
     # end region
 
     # balance related region
@@ -337,6 +339,7 @@ class Wallet(Requests):
 
         async with self._get(url) as response:
             return await self._make_return(response, offer.Offer, spec_ignore=True)
+
     # end region
 
     # payments region
@@ -404,6 +407,7 @@ class Wallet(Requests):
 
         async with self._get(url, params=params, headers=headers) as response:
             return await self._make_return(response, phone_provider.Provider)
+
     # end region
 
     # blocking op idle/setup(run)
@@ -447,6 +451,7 @@ class Wallet(Requests):
         :param path:
         """
         server.setup(self._handler, app, path)
+
     # end region
 
     # updates handler

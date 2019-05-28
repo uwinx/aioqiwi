@@ -17,7 +17,7 @@ class Stats(BaseModel):
     incoming_total: List[Payment]
     outgoing_total: List[Payment]
 
-    def profit(self, currency: int or str = Currency['RUB'].isoformat):
+    def profit(self, currency: int or str = Currency["RUB"].isoformat):
         return sum(
             out.amount - inc.amount
             for inc, out in zip(self.incoming_total, self.outgoing_total)
