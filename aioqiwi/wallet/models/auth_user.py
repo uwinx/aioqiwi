@@ -61,5 +61,5 @@ class Me(BaseModel):
         self.contract_info_enabled = contact_info_enabled
         self.user_info_enabled = user_info_enabled
 
-    def dict_params(self):
-        return {to_lower_camel_case(k): v for k, v in self.dict_params().items()}
+    def as_params(self):
+        return {to_lower_camel_case(k): v for k, v in self.dict_params.items()}

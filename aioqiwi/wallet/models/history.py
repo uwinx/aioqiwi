@@ -46,7 +46,7 @@ class History(BaseModel):
 
     @dataclass(init=False)
     class ServiceExtras(BaseModel):
-        ...
+        pass
 
     @dataclass(init=False)
     class Source(BaseModel):

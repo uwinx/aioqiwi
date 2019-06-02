@@ -19,7 +19,7 @@ def to_upper_camel_case(s: str):
     Returns CamelCased `s`
     """
     out = s
-    for n, letter in enumerate(s):
+    for n in range(len(s)):
         if s[n] in "-_":
             out = out.replace(s[n: n + 2], s[n + 1].upper(), 1)
     return out[0].upper() + out[1:]
@@ -87,7 +87,7 @@ def ignore_specs_get_list_of_models(data: dict or list, model) -> List[type("mod
             items.append(json_to_model(val, model))
 
     elif isinstance(data, dict):
-        for key, val in data.items():
+        for val in data.values():
             if isinstance(val, list):
                 for init_dict in val:
                     items.append(json_to_model(init_dict, model))

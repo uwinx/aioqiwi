@@ -95,7 +95,7 @@ class Wallet(Requests):
         url = Urls.me
 
         if isinstance(params, auth_user.Me):
-            params = params.dict_params()
+            params = params.as_params()
 
         async with self._get(url, params=params) as response:
             return await self._make_return(response, auth_user.AuthUser)
