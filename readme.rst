@@ -10,6 +10,10 @@
     :target: https://www.python.org/
     :alt: Python-version
 
+.. image:: https://api.codacy.com/project/badge/Grade/f3c436d869d04a7095b980f71a78ad51
+    :target: https://www.codacy.com/app/uwinx/aioqiwi?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=uwinx/aioqiwi&amp;utm_campaign=Badge_Grade
+    :alt: codacy-rating
+
 
 **Qiwi payments for humans(for healthy humans)**
 
