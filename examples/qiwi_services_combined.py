@@ -10,7 +10,7 @@ kassa = QiwiKassa("secret_key from p2p.qiwi.com")
 app = Application()
 
 
-@qiwi.on.payment_event()
+@qiwi.on_update()
 async def payment_handler(payment: QiwiUpdate):
     print(BeautifulSum(payment.Payment.Sum).pretty)
 
@@ -23,10 +23,13 @@ async def kassa_update(bill: BillUpdate):
 async def caren():
     lifetime = 30  # days
 
+    await qiwi.transaction(14.88, 'alex@morti.ttl')
+
     bill = await kassa.new_bill(
         14.88,
         "7787787787",
-        "kevin@kids.com",
+        "kevin@kids.com"
+        "com",
         lifetime=lifetime,
         comment="Yes. I took your kids! Pay that bill in a month to see them again :P",
     )

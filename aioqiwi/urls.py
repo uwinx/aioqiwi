@@ -1,8 +1,10 @@
 from urllib.parse import urljoin
 
+BASE = "https://edge.qiwi.com/"
+
 
 class Urls:
-    BASE = "https://edge.qiwi.com/"
+    base = BASE
 
     me = urljoin(BASE, "person-profile/v1/profile/current")
     identification = urljoin(BASE, "identification/v1/persons/{}/identification")
@@ -17,7 +19,7 @@ class Urls:
         delete = urljoin(register, "hooks/{}")
 
     class Balance:
-        base = urljoin(Urls.BASE, "funding-sources/v2/persons/")
+        base = urljoin(BASE, "funding-sources/v2/persons/")
         balance = urljoin(base, "{}/accounts")
         available_aliases = urljoin(balance, "offer")
         set_new_balance = urljoin(balance, "accounts/{}")

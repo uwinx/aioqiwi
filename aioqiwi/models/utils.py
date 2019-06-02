@@ -2,6 +2,9 @@ from typing import List
 
 
 def to_snake_case(s: str):
+    """
+    Returns snake_cased `s`
+    """
     out = ""
     for n, sym in enumerate(s):
         if sym.isupper() and n > 0:
@@ -12,14 +15,20 @@ def to_snake_case(s: str):
 
 
 def to_upper_camel_case(s: str):
+    """
+    Returns CamelCased `s`
+    """
     out = s
     for n, letter in enumerate(s):
         if s[n] in "-_":
-            out = out.replace(s[n : n + 2], s[n + 1].upper(), 1)
+            out = out.replace(s[n: n + 2], s[n + 1].upper(), 1)
     return out[0].upper() + out[1:]
 
 
 def to_lower_camel_case(s: str):
+    """
+    Returns lowerCased `s`
+    """
     s = to_upper_camel_case(s)
     return s[0].lower() + s[1:]
 

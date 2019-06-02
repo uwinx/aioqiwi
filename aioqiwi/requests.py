@@ -39,7 +39,7 @@ class Requests:
         try:
             data = deserialize(data)
         except TypeError as exc:
-            logger.error("%s exc." % exc.with_traceback())
+            logger.error(exc)
             return data, resp
 
         ret_func = (
@@ -51,3 +51,8 @@ class Requests:
 
     def parse_date(self, date):
         return date if isinstance(date, str) else date.strftime(self.TZD)
+
+    @property
+    def listeners(self):
+        if hasattr(self, '_handler'):
+            return self._handler.registered_handlers

@@ -9,7 +9,7 @@ from aiohttp import web
 
 from .models import sent_invoice, refund
 from .handler import Handler
-from . import server
+from .server import setup
 
 from ..urls import Urls
 from ..requests import Requests, serialize
@@ -163,7 +163,7 @@ class QiwiKassa(Requests):
         :param path: your endpoint, see default in aioqiwi.kassa.server.py:L~:start:
         :return:
         """
-        server.setup(self.__api_hash, self._handler, app, path=path)
+        setup(self.__api_hash, self._handler, app, path=path)
 
     def idle(self, host="localhost", port=6969, path=None, app=None):
         """
@@ -174,7 +174,7 @@ class QiwiKassa(Requests):
         :param app: pass web.Application if you want, common-use - aiogram powered webhook-bots
         :return:
         """
-        server.setup(self._handler, app or web.Application(), path)
+        setup(self._handler, app or web.Application(), path)
         web.run_app(app, host=host, port=port)
 
     # session-related

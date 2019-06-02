@@ -53,6 +53,10 @@ class Handler:
 
     @property
     def registered_handlers(self):
+        """
+        User-friendly representation of registered handlers
+        :return:
+        """
         return [
             f'{"".join(func.__name__ for func in filters)}(where {", ".join(f"{k}={v}" for k, v in kfilter.items())})'
             f"->will execute callback: <{callback.__name__}>"

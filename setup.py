@@ -3,11 +3,6 @@ import re
 
 from setuptools import find_packages, setup
 
-try:
-    from pip.req import parse_requirements
-except ImportError:
-    from pip._internal.req import parse_requirements
-
 WORK_DIR = pathlib.Path(__file__).parent
 
 code = (WORK_DIR / 'aioqiwi' / '__init__.py').read_text('utf-8')

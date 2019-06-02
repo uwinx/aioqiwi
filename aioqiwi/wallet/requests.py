@@ -26,7 +26,6 @@ from ..wallet import handler, server
 from ..wallet.enums import Provider, ChequeTypes, PaymentTypes, IdentificationWidget
 from ..requests import serialize, Requests
 
-
 try:
     import aiofiles
 except ImportError:
@@ -456,8 +455,8 @@ class Wallet(Requests):
 
     # updates handler
     @property
-    def on(self):
-        return self._handler
+    def on_update(self):
+        return self._handler.payment_event
 
     async def close(self):
         await self._session.close()

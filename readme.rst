@@ -65,11 +65,11 @@ Installation
 
     wallet = Wallet("...")
 
-    @wallet.on.payment_event(incoming=True)
+    @wallet.on_update(incoming=True)
     async def payments_handler(event: QiwiUpdate):
         print(f"{event.Payment.account} sent you {BeautifulSum(event.Payment).pretty}")
 
-    @wallet.on.payment_event(incoming=True, comment_regex=r"^(special_code|another_special_code)+$")
+    @wallet.on_update(incoming=True, comment_regex=r"^(special_code|another_special_code)+$")
     async def secret_payments_handler(event: QiwiUpdate):
         print("*tovarish mayor suspiciously*",
               f"- WHO THE HECK IS `{event.Payment.account}`, HOW DID HE GET OUR CODE?",

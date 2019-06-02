@@ -2,11 +2,12 @@ import ipaddress
 import typing
 import logging
 
-from aiohttp.web import View, Response, Application, HTTPUnauthorized
+from aiohttp.web import Application
 
 from ..wallet.models import updates
 from ..models import utils
 from ..requests import deserialize
+from ..server import BaseWebHookView
 from ..wallet.handler import Handler
 
 
@@ -23,6 +24,8 @@ QIWI_IP_1 = ipaddress.IPv4Address("91.232.231.36")
 QIWI_IP_2 = ipaddress.IPv4Address("91.232.231.35")
 
 allowed_ips = {QIWI_IP_1, QIWI_IP_2}
+
+logger.info(f'Default allowed qiwi-addresses are {allowed_ips}')
 
 
 def _check_ip(ip: str) -> bool:
@@ -50,42 +53,10 @@ def allow_ip(*ips: typing.Union[str, ipaddress.IPv4Network, ipaddress.IPv4Addres
             raise ValueError
 
 
-class BaseWebHookView(View):
-    def validate_ip(self):
-        # pulled from aiogram.dispatcher.webhook validator big thanks
-        if self.request.app.get("_check_ip", False):
-            ip_address, accept = self.check_ip()
-            if not accept:
-                raise HTTPUnauthorized()
+class QiwiWalletWebView(BaseWebHookView):
+    _check_ip = _check_ip
 
-    def check_ip(self):
-        forwarded_for = self.request.headers.get("X-Forwarded-For")
-        if forwarded_for:
-            return forwarded_for, _check_ip(forwarded_for)
-
-        # For default method
-        peer_name = self.request.transport.get_extra_info("peername")
-
-        if peer_name is not None:
-            host, _ = peer_name
-            return host, _check_ip(host)
-
-        # Not allowed and can't get client IP
-        return None, False
-
-    async def post(self):
-        """
-        Process POST request with validating, further deserialization and resolving
-        :return: :class:``
-        """
-        self.validate_ip()
-
-        update = await self.parse_update()
-        await self._resolve_update(update)
-
-        return Response(text="ok", status=200)
-
-    async def parse_update(self):
+    async def parse_update(self) -> updates.QiwiUpdate:
         """
         Deserialize update and create new update class
         :return: :class:`updated.QiwiUpdate`
@@ -93,26 +64,14 @@ class BaseWebHookView(View):
         data = await self.request.json()
         return utils.json_to_model(deserialize(data), updates.QiwiUpdate)
 
-    async def _resolve_update(self, update: updates.QiwiUpdate):
-        for callback, funcs, attr_eq in self.request.app["_dispatcher"].handlers:
-            if all(func(update) for func in funcs):
-                if attr_eq:
-                    if all(
-                        [getattr(update, key) == attr for key, attr in attr_eq.items()]
-                    ):
-                        self.request.app["_dispatcher"].loop.create_task(
-                            callback(update)
-                        )
-
-                else:
-                    self.request.app["_dispatcher"].loop.create_task(callback(update))
-
 
 def setup(dispatcher: Handler, app: Application, path=None):
     app["_check_ip"] = _check_ip
     app["_dispatcher"] = dispatcher
+    path = path or DEFAULT_QIWI_WEBHOOK_PATH
     app.router.add_view(
-        path or DEFAULT_QIWI_WEBHOOK_PATH,
-        BaseWebHookView,
+        path,
+        QiwiWalletWebView,
         name=DEFAULT_QIWI_ROUTER_NAME,
     )
+    logger.info(f'Added view to endpoint {path}')
