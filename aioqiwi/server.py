@@ -23,7 +23,7 @@ class BaseWebHookView(web.View):
 
     def validate_ip(self):
         # pulled from aiogram.dispatcher.webhook IP-validator
-        if self.request.app.get("_check_ip", False):
+        if self.request.app.get("_check_ip"):
             ip_address, accept = self.check_ip()
             if not accept:
                 logger.warning(f"{ip_address} is not listed as allowed IP")
@@ -50,7 +50,7 @@ class BaseWebHookView(web.View):
         self.validate_ip()
 
         update = await self.parse_update()
-        await self._resolve_update(update)
+        await self._resolve_update(update)  # here can be create_task instead of await
 
         return web.Response(text="ok", status=200)
 

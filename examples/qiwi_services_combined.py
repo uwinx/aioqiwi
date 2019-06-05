@@ -7,7 +7,6 @@ from aioqiwi.utils import BeautifulSum
 
 qiwi = Wallet("api_hash from qiwi.com/api")
 kassa = QiwiKassa("secret_key from p2p.qiwi.com")
-app = Application()
 
 
 @qiwi.on_update()
@@ -23,13 +22,12 @@ async def kassa_update(bill: BillUpdate):
 async def caren():
     lifetime = 30  # days
 
-    await qiwi.transaction(14.88, 'alex@morti.ttl')
+    await qiwi.transaction(14.88, "alex@morti.ttl")
 
     bill = await kassa.new_bill(
         14.88,
         "7787787787",
-        "kevin@kids.com"
-        "com",
+        "kevin@kids.com" "com",
         lifetime=lifetime,
         comment="Yes. I took your kids! Pay that bill in a month to see them again :P",
     )
@@ -44,6 +42,11 @@ async def show_my_history_by_the_way(rows: int = 1):
         print(o.type, o.status, BeautifulSum(o.Sum).pretty, sep="|")
 
 
-# coroutines and functions passed as a first arguments in lists will be executed in the background and forgotten
+async def before_idle():
+    await caren()
+    await show_my_history_by_the_way(25)
+
+
+app = Application()
 kassa.configure_listener(app)
-qiwi.idle([caren], [show_my_history_by_the_way, 25], app=app)
+qiwi.idle(on_startup=before_idle(), app=app)

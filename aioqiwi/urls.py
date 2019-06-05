@@ -14,8 +14,8 @@ class Urls:
 
     class Hooks:
         register = urljoin(BASE, "payment-notifier/v1/hooks")
-        active = urljoin(register, "active")
-        test = urljoin(register, "test")
+        active = register + "/active"
+        test = register + "/test"
         delete = urljoin(register, "hooks/{}")
 
     class Balance:
@@ -26,8 +26,9 @@ class Urls:
 
     class Payments:
         base = urljoin(BASE, "sinap/api/v2/terms/{}/payments")
-        qiwi = base.format("99")
+        to_qiwi = base.format("99")
         providers = "https://qiwi.com/mobile/detect.action"
+        commission = urljoin(BASE, "sinap/providers/{}/onlineCommission")
 
     class P2PBillPayments:
         base = "https://api.qiwi.com/partner/bill/v1/bills/"

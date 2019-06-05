@@ -190,7 +190,7 @@ It'd great if you issue some design components. Meantime api-designs are awful, 
 🔧 TODOs
 ---------------------------
 
-- **Error handling** 🔥
+- **Error handling** 🔥 (for now you can handle aioqiwi.models.exceptions.ModelConversionError using ``as_model``)
 - **Tests** 🔥
 - **Documentation**
 

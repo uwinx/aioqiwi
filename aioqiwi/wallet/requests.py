@@ -1,9 +1,10 @@
 import sys
 import asyncio
 import logging
-import inspect
+import warnings
 import datetime
 from typing import List, Union
+from urllib.parse import urljoin
 
 from aiohttp import web
 
@@ -18,13 +19,14 @@ from ..wallet.models import (
     identification,
     history,
     stats,
+    commission as commission_model,
 )
 from ..utils.phone import parse_phone
 from ..utils.currencies.currency_utils import Currency
 from ..utils.requests import params_filter, new_http_session, get_currency
-from ..wallet import handler, server
-from ..wallet.enums import Provider, ChequeTypes, PaymentTypes, IdentificationWidget
+from ..wallet import handler, server, enums, idwidget
 from ..requests import serialize, Requests
+from ..models.exceptions import ModelConversionError
 
 try:
     import aiofiles
@@ -34,6 +36,7 @@ except ImportError:
 _get_loop = asyncio.get_event_loop
 
 logger = logging.getLogger("aioqiwi")
+warn = warnings.warn
 
 
 class Wallet(Requests):
@@ -49,6 +52,7 @@ class Wallet(Requests):
         """
         session = new_http_session(api_hash)
 
+        # http-session and requests shortcuts
         self._session = session
         self._get = session.get
         self._post = session.post
@@ -104,7 +108,7 @@ class Wallet(Requests):
 
     # identification region
     async def identification(
-        self, identification_class: IdentificationWidget = None
+        self, identification_class: idwidget.IdentificationWidget = None
     ) -> identification.Identification:
         """
         Get your current identification status, or pass identificationWidget class to request qiwi to verify you
@@ -129,7 +133,7 @@ class Wallet(Requests):
         self,
         rows: int,
         *,
-        operation: str = "ALL",
+        operation: enums.PaymentTypes = enums.PaymentTypes.ALL,
         sources: list = None,
         from_date: Union[str, datetime.datetime] = None,
         to_date: Union[str, datetime.datetime] = None,
@@ -139,8 +143,8 @@ class Wallet(Requests):
         """
         Get payments history from new to old
         :param rows: Quantity of operations
-        :param operation: one from <IN, ALL, OUT> see aioqiwi.wallet.helper.PaymentTypes
-        :param sources: payment source see aioqiwi.wallet.helper:PaymentSources
+        :param operation: one from <IN, ALL, OUT> see aioqiwi.wallet.enums.enums.PaymentTypes
+        :param sources: payment source see aioqiwi.wallet.enums:PaymentSources
         :param from_date: from date strftime with timezone (formatted datetime `YYYY-MM-DDThh:mm:ssTZ`)
         :param to_date: till date
         :param offset_date: offset for previous date [use only with offset_id]
@@ -175,16 +179,16 @@ class Wallet(Requests):
         from_date: Union[str, datetime.datetime] = datetime.datetime.now()
         - datetime.timedelta(days=89),
         to_date: Union[str, datetime.datetime] = datetime.datetime.now(),
-        operation: str = "ALL",
-        sources: list = None,
+        operation: enums.PaymentTypes = enums.PaymentTypes.ALL,
+        sources: enums.PaymentSources = None,
     ) -> stats.Stats:
         """
         Get statistics of payments
         :param from_date: from date strftime with timezone, pass EasyDate object for convenience or
                 str-formatted datetime `YYYY-MM-DDThh:mm:ssZ` - from docs
         :param to_date: like from_date but to
-        :param operation: one from <IN, ALL, OUT> see aioqiwi.wallet.helper.PaymentTypes
-        :param sources: payment source see aioqiwi.wallet.helper:PaymentSources
+        :param operation: one from <IN, ALL, OUT> see aioqiwi.wallet.enums.enums.PaymentTypes
+        :param sources: payment source see aioqiwi.wallet.enums:PaymentSources
         :return: stats object with incoming_total, outgoing_total
         """
 
@@ -221,10 +225,12 @@ class Wallet(Requests):
         """
         url = Urls.cheque.format(transaction_id)
 
-        if ftype.upper() not in ChequeTypes or transaction_type.upper() not in [
-            PaymentTypes.IN,
-            PaymentTypes.OUT,
-        ]:
+        if not all(
+            (
+                enums.ChequeTypes.has(ftype.upper()),
+                enums.PaymentTypes.has(transaction_type.upper()),
+            )
+        ):
             raise ValueError("Unknown file type or transaction type")
 
         params = {"type": transaction_type.upper(), "format": ftype.upper()}
@@ -268,7 +274,7 @@ class Wallet(Requests):
                 if not send_test_notification:
                     return await self._make_return(response, webhooks.Hooks)
                 else:
-                    raise ValueError("Nothing will be done!")
+                    raise ValueError("Nothing will be done with that arg passing!")
 
         params = {"hookType": 1, "param": server_url, "txnType": transactions_type or 2}
 
@@ -282,7 +288,8 @@ class Wallet(Requests):
         :return: json-response
         """
         if not hook_id:
-            hook_id = (await self.hooks()).hook_id
+            hook = await self.hooks()
+            hook_id = hook['hookId'] if isinstance(hook, dict) else hook.hook_id
 
         url = Urls.Hooks.delete.format(hook_id)
         async with self._delete(url) as response:
@@ -297,11 +304,12 @@ class Wallet(Requests):
         :param transactions_types: 0, 1, 2 is 2 by default
         :return: Active Hooks
         """
-        active = await self.hooks(None, None)
-        if not active:
-            raise ValueError("You do not have active webhooks")
+        try:
+            active = await self.hooks(None, None)
+            await self.delete_hooks(active["hookId"] if isinstance(active, dict) else active.hook_id)
+        except ModelConversionError:
+            warn("Seems you didn't have registered webhooks. Setting new to %s" % new_url, RuntimeWarning)
 
-        await self.delete_hooks(active.hook_id)
         return await self.hooks(new_url, transactions_types)
 
     # end region
@@ -346,8 +354,8 @@ class Wallet(Requests):
         self,
         amount: Union[int, float],
         receiver: Union[int, str],
-        currency: Union[Currency, str, int] = "648",
-        provider_id: int = Provider.QIWI_WALLET,
+        currency: Union[Currency, str, int] = Currency["643"].isoformat,
+        provider_id: enums.Provider = enums.Provider.QIWI_WALLET.value,
         comment: str = "via aioqiwi",
         fields: dict = None,
     ) -> payment.Payment:
@@ -357,7 +365,7 @@ class Wallet(Requests):
         situation
         :param amount: amount of money will be sent
         :param receiver: phone number/bank account number/
-        :param currency: 648 ISO by default change it if you want [better do not touch]
+        :param currency: '643" ISO by default change it if you want [better do not touch]
         :param provider_id: QIWI by default do not change if you are not sure use other method *_transaction
         :param comment: text for comment
         :param fields: do not pass !payments.FieldsWidget! use other method *_transaction
@@ -365,9 +373,9 @@ class Wallet(Requests):
         """
         url = Urls.Payments.base.format(provider_id)
 
-        ccode = get_currency(currency)
+        ccode = get_currency(currency).isoformat
+
         data = serialize(
-            params_filter(
                 {
                     "id": datetime.datetime.utcnow().timestamp().__int__().__str__(),
                     "sum": {"amount": round(float(amount), 2), "currency": ccode},
@@ -375,20 +383,49 @@ class Wallet(Requests):
                     "fields": fields or {"account": parse_phone(receiver)},
                     "comment": comment,
                 }
-            )
         )
 
         async with self._post(url, data=data) as response:
             return await self._make_return(response, payment.Payment)
 
+    async def commission(
+        self,
+        amount: float,
+        receiver: Union[str, int],
+        provider: Union[enums.Provider] = enums.Provider.QIWI_WALLET,
+        *,
+        currency: Union[Currency, str, int] = Currency["643"].isoformat,
+    ) -> List[commission_model.Commission]:
+        """
+        Get commission info for a transaction
+        :param amount: amount of money theoretically will be sent
+        :param receiver: receiver
+        :param provider: provider id default is qiwi
+        :param currency: ISO of currency DEFAULT and the only acceptable(from qiwidocs) is 643 ruble
+        :return:
+        """
+        url = urljoin(Urls.Payments.commission, provider)
+
+        currency = get_currency(currency).isoformat
+        data = serialize(
+            {
+                "account": parse_phone(receiver),
+                "paymentMethod": {"type": "Account", "accountId": currency},
+                "purchaseTotals": {"total": {"amount": amount, "currency": currency}},
+            }
+        )
+
+        async with self._post(url, data=data) as response:
+            return await self._make_return(response, commission_model.Commission)
+
     async def detect_provider(
         self, phone: Union[str, int] = None
     ) -> phone_provider.Provider:
         """
-        Helper for getting phone number's provider id
+        Helper for getting phone number's enums.Provider id
         :param phone: pass phone number or
                       it will try to get passed phone_number in initialization otherwise ask you to enter
-        :return: Provider object
+        :return: enums.Provider object
         """
         url = Urls.Payments.providers
         params = params_filter(
@@ -410,11 +447,10 @@ class Wallet(Requests):
     # end region
 
     # blocking op idle/setup(run)
-    def idle(self, *blocking_funcs, host="localhost", port=6969, path=None, app=None):
+    def idle(self, on_startup, host="localhost", port=7494, path=None, app=None):
         """
         [WARNING] This is blocking io method
-        :params blocking_funcs: pass any func and it'll we executed async-ly with run-app
-        PASSING RULE: [FUNC, *ARGS, **KWARGS]
+        :param on_startup: pass coroutine that will run before server setup
         :param host: server host
         :param port: server port that open for tcp/ip trans.
         :param path: path for qiwi that will send requests
@@ -422,24 +458,13 @@ class Wallet(Requests):
         :return:
         """
 
-        async def inner_task(func, args_, kwargs_):
-            if inspect.iscoroutine(func):
-                await func(*args_, **kwargs_)
-            func(*args_, **kwargs_)
+        async def inner_task(coro):
+            await coro
 
-        if isinstance(blocking_funcs, (list, tuple, set)):
-            for item in blocking_funcs:
-                args = item[1] if len(item) >= 2 else []
-                kwargs = (
-                    item[2]
-                    if len(item) == 3
-                    else item[1]
-                    if len(item) >= 2 and isinstance(item[1], dict)
-                    else {}
-                )
-                self.loop.create_task(inner_task(item[0], args, kwargs))
+        self.loop.create_task(inner_task(on_startup))
 
-        server.setup(self._handler, app or web.Application(), path)
+        app = app or web.Application()
+        server.setup(self._handler, app, path)
         web.run_app(app, host=host, port=port)
 
     def configure_for_app(self, app, path=None):

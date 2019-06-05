@@ -25,7 +25,7 @@ QIWI_IP_2 = ipaddress.IPv4Address("91.232.231.35")
 
 allowed_ips = {QIWI_IP_1, QIWI_IP_2}
 
-logger.info(f'Default allowed qiwi-addresses are {allowed_ips}')
+logger.info(f"Default allowed qiwi-addresses are {allowed_ips}")
 
 
 def _check_ip(ip: str) -> bool:
@@ -69,9 +69,5 @@ def setup(dispatcher: Handler, app: Application, path=None):
     app["_check_ip"] = _check_ip
     app["_dispatcher"] = dispatcher
     path = path or DEFAULT_QIWI_WEBHOOK_PATH
-    app.router.add_view(
-        path,
-        QiwiWalletWebView,
-        name=DEFAULT_QIWI_ROUTER_NAME,
-    )
-    logger.info(f'Added view to endpoint {path}')
+    app.router.add_view(path, QiwiWalletWebView, name=DEFAULT_QIWI_ROUTER_NAME)
+    logger.info(f"Added view to endpoint {path}")

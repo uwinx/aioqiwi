@@ -60,7 +60,7 @@ class QiwiKassa(Requests):
         peer: Union[str, int] = None,
         peer_email: str = None,
         lifetime: Union[int, datetime.datetime] = 10,
-        currency: Union[str, int, Currency] = Currency["rub"],
+        currency: Union[str, int, Currency] = Currency["643"],
         comment: str = "via aioqiwi",
         bill_id: str = None,
     ) -> sent_invoice.Invoice:
@@ -83,7 +83,10 @@ class QiwiKassa(Requests):
         data = serialize(
             params_filter(
                 {
-                    "amount": {"currency": get_currency(currency), "value": amount},
+                    "amount": {
+                        "currency": get_currency(currency).code,
+                        "value": amount,
+                    },
                     "comment": comment,
                     "expirationDateTime": self.parse_date(lifetime),
                     "customer": {"phone": parse_phone(peer), "account": peer_email}
@@ -124,7 +127,7 @@ class QiwiKassa(Requests):
         bill_id: str,
         refund_id: str,
         amount: float = None,
-        currency: str or int = None,
+        currency: Union[str, int] = None,
     ) -> refund.Refund:
         """
         Refund user's money, pass amount and currency to refund, else will get info about refund
@@ -141,9 +144,7 @@ class QiwiKassa(Requests):
                 return await self._make_return(response, refund.Refund)
 
         data = serialize(
-            params_filter(
-                {"amount": {"currency": get_currency(currency), "value": amount}}
-            )
+            {"amount": {"currency": get_currency(currency).code, "value": amount}}
         )
 
         async with self._put(url, data=data) as response:
@@ -165,7 +166,7 @@ class QiwiKassa(Requests):
         """
         setup(self.__api_hash, self._handler, app, path=path)
 
-    def idle(self, host="localhost", port=6969, path=None, app=None):
+    def idle(self, host="localhost", port=7494, path=None, app=None):
         """
         [WARNING] This is blocking io method
         :param host: server host

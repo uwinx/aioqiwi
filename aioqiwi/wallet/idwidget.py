@@ -11,6 +11,7 @@ class IdentificationWidget:
     snils 	Номер СНИЛС пользователя
     oms 	Номер полиса ОМС пользователя
     """
+
     birth_date: str
     first_name: str
     inn: str

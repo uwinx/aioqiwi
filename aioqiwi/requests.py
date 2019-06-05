@@ -2,7 +2,8 @@ import json
 import importlib
 import logging
 
-from .models import utils
+from .models import utils, exceptions
+from .exceptions import ApiBaseException
 
 # DEFAULT MOSCOW-TIMEZONE
 MOSCOW_TZD = "03:00"
@@ -27,7 +28,7 @@ class Requests:
 
     async def _make_return(self, resp, *models, spec_ignore=False):
         """
-        todo: ERROR HANDLING
+        todo: BETTER-ERROR HANDLING
         Convenient way to do return
         :param resp: server-response
         :param models: api-model
@@ -47,7 +48,11 @@ class Requests:
             if spec_ignore
             else utils.json_to_model
         )
-        return ret_func(data, *models) if self.as_model else data
+
+        try:
+            return ret_func(data, *models) if self.as_model else data
+        except exceptions.ModelConversionError as error:
+            raise ApiBaseException(error.json)
 
     def parse_date(self, date):
         return date if isinstance(date, str) else date.strftime(self.TZD)

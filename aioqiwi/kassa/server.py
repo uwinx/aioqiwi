@@ -5,9 +5,11 @@ import logging
 from aiohttp import web
 
 from .crypto import hmac_key
+from .models import updates
 
 from ..requests import deserialize
 from ..server import BaseWebHookView
+from ..models import utils
 
 logger = logging.getLogger("aioqiwi")
 
@@ -46,24 +48,31 @@ allow_ip(*allowed_ips)
 
 
 class QiwiBillServerWebView(BaseWebHookView):
-    async def hash_validator(self):
+    _check_ip = _check_ip
+
+    def hash_validator(self, update):
         sha256 = self.request.headers.get("X-Api-Signature-SHA256")
         secret = self.request.app.get("_secret_key")
-        bill = deserialize(await self.request.json()).get("bill", {})
 
-        try:
-            return (
-                    hmac_key(
-                        secret,
-                        bill["amount"],
-                        bill["status"],
-                        bill["billId"],
-                        bill["siteId"],
-                    )
-                    == sha256
+        if (
+            hmac_key(
+                secret,
+                update.Bill.Amount,
+                update.Bill.Status,
+                update.Bill.bill_id,
+                update.Bill.site_id,
             )
-        except KeyError as exc:
-            raise web.HTTPBadRequest(reason=f"{exc.args}")
+            != sha256
+        ):
+            raise web.HTTPBadRequest(text="validation error")
+
+    async def parse_update(self) -> updates.BillUpdate:
+        """
+        Deserialize update and create new update class
+        :return: :class:`updated.QiwiUpdate`
+        """
+        data = await self.request.json()
+        return utils.json_to_model(deserialize(data), updates.BillUpdate)
 
     async def post(self):
         """
@@ -71,17 +80,17 @@ class QiwiBillServerWebView(BaseWebHookView):
         """
         self.validate_ip()
 
-        if await self.hash_validator():
-            update = await self.parse_update()
-            await self._resolve_update(update)
+        update = await self.parse_update()
 
-            return web.json_response(
-                data={"error": "0"},
-                status=200,
-                headers={"Content-type": "application/json"},
-            )
+        self.hash_validator(update)
 
-        return web.Response(status=0, headers={"Content-type": "application/json"})
+        await self._resolve_update(update)
+
+        return web.json_response(
+            data={"error": "0"},
+            status=200,
+            headers={"Content-type": "application/json"},
+        )
 
 
 def setup(secret_key, dispatcher, app: web.Application, path=None):

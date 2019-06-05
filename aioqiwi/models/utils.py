@@ -1,5 +1,7 @@
 from typing import List
 
+from .exceptions import ModelConversionError
+
 
 def to_snake_case(s: str):
     """
@@ -52,6 +54,21 @@ def _raw_base_json_to_model(data: dict, model):
     return model
 
 
+def hasattribute(model, attribute, val) -> bool:
+    """
+    Check if attribute exists in class
+    :param model: raw not initialized model
+    :param attribute: model attribute
+    :param val: value of attribute
+    :return: boolean
+    """
+
+    if isinstance(val, dict):
+        return hasattr(model, to_upper_camel_case(attribute))
+
+    return to_snake_case(attribute) in vars(model)['__annotations__']
+
+
 def json_to_model(data: dict, model_type, model_to_list=None):
     """
     Converts json-type(dict) to model
@@ -59,19 +76,22 @@ def json_to_model(data: dict, model_type, model_to_list=None):
     model = model_type()
 
     for key, val in data.items():
-        if isinstance(val, dict):
-            new_model = getattr(model, to_upper_camel_case(key))
-            setattr(model, to_upper_camel_case(key), json_to_model(val, new_model))
+        if hasattribute(model_type, key, val):
+            if isinstance(val, dict):
+                new_model = getattr(model, to_upper_camel_case(key))
+                setattr(model, to_upper_camel_case(key), json_to_model(val, new_model))
 
-        elif isinstance(val, list):
-            setattr(
-                model,
-                to_snake_case(key),
-                [_raw_base_json_to_model(init_val, model_to_list) for init_val in val],
-            )
+            elif isinstance(val, list):
+                setattr(
+                    model,
+                    to_snake_case(key),
+                    [_raw_base_json_to_model(init_val, model_to_list) for init_val in val],
+                )
 
+            else:
+                setattr(model, to_snake_case(key), val)
         else:
-            setattr(model, to_snake_case(key), val)
+            raise ModelConversionError(model_type, data)
 
     return model
 

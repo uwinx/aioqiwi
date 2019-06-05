@@ -1,14 +1,20 @@
 from enum import Enum
 
 
-class PaymentTypes(Enum):
+class MetaEnum(Enum):
+    @classmethod
+    def has(cls, item):
+        return any(item == var.value for var in cls)
+
+
+class PaymentTypes(MetaEnum):
     incoming = IN = "IN"
     outgoing = OUT = "OUT"
     qiwi_card = QIWI_CARD = "QIWI_CARD"
     all = ALL = "ALL"
 
 
-class PaymentSources(Enum):
+class PaymentSources(MetaEnum):
     """Источники платежа, для отбора. Каждый источник задается как отдельный параметр и нумеруется элементом массива, начиная с нуля (sources[0], sources[1] и т.д.). Допустимые значения:
     QW_RUB - рублевый счет кошелька,
     QW_USD - счет кошелька в долларах,
@@ -23,7 +29,7 @@ class PaymentSources(Enum):
     MK = "MK"
 
 
-class Provider(Enum):
+class Provider(MetaEnum):
     """
     99 - Перевод на QIWI Wallet
 
@@ -53,23 +59,18 @@ class Provider(Enum):
 
     MIR_CARD = 31652
 
-    TINKOFF = TINKOFF_BANK = 466
-    ALPHA = ALFA = ALFA_BANK = ALPHA_BANK = 464
+    TINKOFF_BANK = 466
+    ALPHA_BANK = 464
     PROSVYAZ_BANK = 821
     RUSSKIY_STANDART = 815
 
     CUSTOM = 1717
 
 
-class _ChequeTypes:
+class ChequeTypes(MetaEnum):
     """
-    [pseudo-enum] Check [Cheque]'s output type
+    Check [Cheque]'s output type
     """
+
     JPEG = "JPEG"
     PDF = "PDF"
-
-    def __contains__(self, item):
-        return item in [self.JPEG, self.PDF]
-
-
-ChequeTypes = _ChequeTypes()

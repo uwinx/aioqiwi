@@ -1,5 +1,3 @@
-import typing
-
 from aiohttp import client
 
 from ..utils.currencies.currency_utils import Currency
@@ -15,17 +13,16 @@ def params_filter(dictionary: dict):
     return {k: str(v) for k, v in dictionary.items() if v is not None}
 
 
-def get_currency(currency: typing.Union[str, int, Currency]):
+def get_currency(currency):
     """
     Get currency lazy method
     :param currency: currency like ISO-4217, 3-len curr-codes
     :return: currency-code
     """
-    return (
-        currency.code
-        if isinstance(currency, Currency.currency)
-        else Currency[currency].code
-    )
+    if isinstance(currency, Currency.currency):
+        return currency
+
+    return Currency[currency]
 
 
 def new_http_session(
@@ -42,7 +39,7 @@ def new_http_session(
     headers = {
         "Accept": atype or "application/json",
         "Content-type": ctype or "application/json",
-        "Authorization": f"Bearer {api_hash}" if api_hash else None,
+        "Authorization": f"Bearer {api_hash}" if api_hash else None,  # eg:maps
     }
 
     timeout = client.ClientTimeout(total=timeout or 60)
