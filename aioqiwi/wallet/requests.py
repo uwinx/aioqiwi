@@ -257,12 +257,14 @@ class Wallet(Requests):
         transactions_type: int = None,
         *,
         send_test_notification: bool = False,
+        _none_model: bool = False
     ) -> webhooks.Hooks:
         """
         Register and manage your web-hooks
         :param url: your server endpoint that qiwi will send updates to
         :param transactions_type: 0 => incoming, 1 => outgoing, 2 => all
         :param send_test_notification: qiwi will send you test webhook update
+        :param _none_model: new_hooks use it, better do not touch
         :return: Hooks or None
         """
         server_url = url
@@ -272,14 +274,16 @@ class Wallet(Requests):
             url = Urls.Hooks.test if send_test_notification else Urls.Hooks.active
             async with self._get(url) as response:
                 if not send_test_notification:
-                    return await self._make_return(response, webhooks.Hooks)
+                    return await self._make_return(response, webhooks.Hooks, force_non_model=_none_model)
                 else:
                     raise ValueError("Nothing will be done with that arg passing!")
 
-        params = {"hookType": 1, "param": server_url, "txnType": transactions_type or 2}
+        params = params_filter(
+            {"hookType": 1, "param": server_url, "txnType": transactions_type or 2}
+        )
 
         async with self._put(url, params=params) as response:
-            return await self._make_return(response, webhooks.Hooks)
+            return await self._make_return(response, webhooks.Hooks, force_non_model=_none_model)
 
     async def delete_hooks(self, hook_id: str = None) -> dict:
         """
@@ -304,10 +308,11 @@ class Wallet(Requests):
         :param transactions_types: 0, 1, 2 is 2 by default
         :return: Active Hooks
         """
-        try:
-            active = await self.hooks(None, None)
-            await self.delete_hooks(active["hookId"] if isinstance(active, dict) else active.hook_id)
-        except ModelConversionError:
+
+        active = await self.hooks(_none_model=True)
+        if 'hookId' in active:
+            await self.delete_hooks(active["hookId"])
+        else:
             warn("Seems you didn't have registered webhooks. Setting new to %s" % new_url, RuntimeWarning)
 
         return await self.hooks(new_url, transactions_types)
@@ -447,7 +452,7 @@ class Wallet(Requests):
     # end region
 
     # blocking op idle/setup(run)
-    def idle(self, on_startup, host="localhost", port=7494, path=None, app=None):
+    def idle(self, on_startup=None, host="localhost", port=7494, path=None, app=None):
         """
         [WARNING] This is blocking io method
         :param on_startup: pass coroutine that will run before server setup
@@ -458,10 +463,11 @@ class Wallet(Requests):
         :return:
         """
 
-        async def inner_task(coro):
-            await coro
-
-        self.loop.create_task(inner_task(on_startup))
+        try:
+            if on_startup:
+                self.loop.create_task(on_startup)
+        except Exception as error:
+            warn(f'Your passed coroutine failed to execute with traceback {error}')
 
         app = app or web.Application()
         server.setup(self._handler, app, path)

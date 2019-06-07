@@ -49,20 +49,22 @@ class QiwiKassa(Requests):
         """
         return (
             base64.urlsafe_b64encode(uuid.uuid3(uuid.uuid4(), "").bytes)
-            .decode()
-            .rstrip("=")
-            .upper()
+                .decode()
+                .rstrip("=")
+                .upper()
         )
 
     async def new_bill(
-        self,
-        amount: float,
-        peer: Union[str, int] = None,
-        peer_email: str = None,
-        lifetime: Union[int, datetime.datetime] = 10,
-        currency: Union[str, int, Currency] = Currency["643"],
-        comment: str = "via aioqiwi",
-        bill_id: str = None,
+            self,
+            amount: float,
+            peer: Union[str, int] = None,
+            peer_email: str = None,
+            lifetime: Union[int, datetime.datetime] = 10,
+            *,
+            currency: Union[str, int, Currency] = Currency["643"],
+            comment: str = "aioqiwi-check",
+            bill_id: str = None,
+            custom_fields: dict = None
     ) -> sent_invoice.Invoice:
         """
         Create new bill
@@ -73,6 +75,7 @@ class QiwiKassa(Requests):
         :param currency: pass Currency object or integer code like <845> of currency or str code like <'USD'>
         :param comment: invoice commentary
         :param bill_id: unique invoice identifier in merchant's system
+        :param custom_fields
         :return: SentInvoice if success
         """
         url = Urls.P2PBillPayments.bill.format(bill_id or self.generate_bill_id())
@@ -81,7 +84,6 @@ class QiwiKassa(Requests):
             lifetime = datetime.datetime.now() + datetime.timedelta(days=lifetime)
 
         data = serialize(
-            params_filter(
                 {
                     "amount": {
                         "currency": get_currency(currency).code,
@@ -89,12 +91,11 @@ class QiwiKassa(Requests):
                     },
                     "comment": comment,
                     "expirationDateTime": self.parse_date(lifetime),
-                    "customer": {"phone": parse_phone(peer), "account": peer_email}
-                    if peer and peer_email
-                    else {},
-                    "customFields": {},
+                    "customer": {
+                        "phone": parse_phone(peer),
+                        "account": peer_email} if peer and peer_email else {},
+                    "customFields": custom_fields or {},
                 }
-            )
         )
 
         async with self._put(data=data, url=url) as response:
@@ -123,11 +124,11 @@ class QiwiKassa(Requests):
             return await self._make_return(response, sent_invoice.Invoice)
 
     async def refund(
-        self,
-        bill_id: str,
-        refund_id: str,
-        amount: float = None,
-        currency: Union[str, int] = None,
+            self,
+            bill_id: str,
+            refund_id: str,
+            amount: float = None,
+            currency: Union[str, int] = None,
     ) -> refund.Refund:
         """
         Refund user's money, pass amount and currency to refund, else will get info about refund

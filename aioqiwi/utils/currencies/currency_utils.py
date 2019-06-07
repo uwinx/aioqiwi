@@ -2,14 +2,9 @@ from typing import Tuple
 
 from . import currencies_parsed as cur
 
-from ...wallet.models import updates
-from ...wallet.models import history
-
 
 class BeautifulSum:
-    def __init__(
-        self, payment_sum: history.History.Sum or updates.QiwiUpdate.Payment.Sum
-    ):
+    def __init__(self, payment_sum):
         """
         :param payment_sum: object `sum` from history or qiwi-update objects
 
@@ -92,7 +87,7 @@ class Currency:
 
     @staticmethod
     def get_raw(
-        amount: float or int, currency_code: str or int, currency_attr: str = None
+            amount: float or int, currency_code: str or int, currency_attr: str = None
     ) -> Tuple[str, cur.Currency]:
         """
         Get pair of 3dig formatted amount

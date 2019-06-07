@@ -7,16 +7,20 @@ from .exceptions import ApiBaseException
 
 # DEFAULT MOSCOW-TIMEZONE
 MOSCOW_TZD = "03:00"
+DATETIME_FMT = '%Y-%m-%dT%H:%M:%S+{}'
+
 logger = logging.getLogger('aioqiwi')
 
 serialize = json.dumps
 deserialize = json.loads
+json_module = 'json'
 
 # get json (d1)e(n2)coder
 for json_lib in ["rapidjson", "ujson"]:
     try:
         serialize = importlib.import_module(json_lib).dumps
         deserialize = importlib.import_module(json_lib).loads
+        json_module = json_lib
         break
     except ImportError:
         continue
@@ -24,9 +28,14 @@ for json_lib in ["rapidjson", "ujson"]:
 
 class Requests:
     TZD = MOSCOW_TZD
+
+    @property
+    def _date_fmt(self):
+        return DATETIME_FMT.format(self.TZD)
+
     as_model = True
 
-    async def _make_return(self, resp, *models, spec_ignore=False):
+    async def _make_return(self, resp, *models, spec_ignore=False, force_non_model=False):
         """
         todo: BETTER-ERROR HANDLING
         Convenient way to do return
@@ -50,12 +59,14 @@ class Requests:
         )
 
         try:
-            return ret_func(data, *models) if self.as_model else data
+            if not force_non_model:
+                return ret_func(data, *models) if self.as_model else data
+            return data
         except exceptions.ModelConversionError as error:
             raise ApiBaseException(error.json)
 
     def parse_date(self, date):
-        return date if isinstance(date, str) else date.strftime(self.TZD)
+        return date if isinstance(date, str) else date.strftime(self._date_fmt)
 
     @property
     def listeners(self):
