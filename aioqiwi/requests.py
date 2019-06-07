@@ -13,7 +13,7 @@ serialize = json.dumps
 deserialize = json.loads
 
 # get json (d1)e(n2)coder
-for json_lib in ["rapidjson", "ujson", "json"]:
+for json_lib in ["rapidjson", "ujson"]:
     try:
         serialize = importlib.import_module(json_lib).dumps
         deserialize = importlib.import_module(json_lib).loads

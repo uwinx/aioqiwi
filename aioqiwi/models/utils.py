@@ -21,7 +21,7 @@ def to_upper_camel_case(s: str):
     Returns CamelCased `s`
     """
     out = s
-    for n in range(len(s)):
+    for n, _ in enumerate(s):
         if s[n] in "-_":
             out = out.replace(s[n: n + 2], s[n + 1].upper(), 1)
     return out[0].upper() + out[1:]
