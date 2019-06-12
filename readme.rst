@@ -14,6 +14,8 @@
     :target: https://www.codacy.com/app/uwinx/aioqiwi?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=uwinx/aioqiwi&amp;utm_campaign=Badge_Grade
     :alt: codacy-rating
 
+*WARNING AT CURRENT STATE AIOQIWI IS NOT PRODUCTION-READY* 
+
 
 **Qiwi payments for humans(for healthy humans)**
 
