@@ -1,12 +1,10 @@
 import typing
 
-from ..urls import Urls
-from ..requests import Requests
-
+from .models.partner import Partner
 from .models.polygon import Polygon
 from .models.terminal import Terminal
-from .models.partner import Partner
-
+from ..requests import Requests
+from ..urls import Urls
 from ..utils.requests import new_http_session, params_filter
 
 
@@ -74,10 +72,3 @@ class QiwiMaps(Requests):
     # session-related
     async def close(self):
         await self._session.close()
-
-    # `async with` block
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()

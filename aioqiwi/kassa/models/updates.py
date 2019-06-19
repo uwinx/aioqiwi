@@ -31,6 +31,8 @@ class BillUpdate(BaseModel):
             def __setattr__(self, key, value):
                 setattr(self, key, value)
 
+            _field_free_aioqiwi_model = True
+
         creation_date_time: str
         expiration_date_time: str
 

@@ -15,6 +15,9 @@
     :alt: codacy-rating
 
 
+*(!) WARNING AT CURRENT STATE AIOQIWI IS NOT PRODUCTION-READY (!)*
+
+
 **Qiwi payments for humans(for healthy humans)**
 
 Supports most of `qiwi <https://qiwi.com>`_ apis: `qiwi-maps <https://github.com/QIWI-API/qiwi-map>`_, `bills <https://developer.qiwi.com/en/bill-payments/>`_, `wallet <https://developer.qiwi.com/en/qiwi-wallet-personal/>`_
@@ -165,12 +168,12 @@ Cool qiwi bills!
         import asyncio
         from aioqiwi import Wallet
 
-        async def json():
+        async def json_response():
             async with Wallet('...') as wallet:
                 wallet.as_model = False
                 print(await wallet.balance())
 
-        asyncio.run(json())
+        asyncio.run(json_response())
 
 
 -------------------

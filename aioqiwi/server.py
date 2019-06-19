@@ -8,7 +8,7 @@ logger = logging.getLogger("aioqiwi")
 def get_unique(update):
     return (
         f"(bill_id={update.Bill.bill_id})"
-        if hasattr(update, 'bill_id')  # ew
+        if hasattr(update, "bill_id")  # noqa
         else f"(mid={update.message_id}/hook_id={update.hook_id})"
     )
 

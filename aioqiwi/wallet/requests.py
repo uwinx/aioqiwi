@@ -1,14 +1,19 @@
-import sys
 import asyncio
-import logging
-import warnings
 import datetime
+import logging
+import sys
+import warnings
 from typing import List, Union
 from urllib.parse import urljoin
 
 from aiohttp import web
 
+from ..requests import serialize, Requests
 from ..urls import Urls
+from ..utils.currencies.currency_utils import Currency
+from ..utils.phone import parse_phone
+from ..utils.requests import params_filter, new_http_session, get_currency
+from ..wallet import handler, server, enums, idwidget
 from ..wallet.models import (
     webhooks,
     balance,
@@ -21,12 +26,6 @@ from ..wallet.models import (
     stats,
     commission as commission_model,
 )
-from ..utils.phone import parse_phone
-from ..utils.currencies.currency_utils import Currency
-from ..utils.requests import params_filter, new_http_session, get_currency
-from ..wallet import handler, server, enums, idwidget
-from ..requests import serialize, Requests
-from ..models.exceptions import ModelConversionError
 
 try:
     import aiofiles
@@ -70,7 +69,8 @@ class Wallet(Requests):
         self._handler = handler.Handler(self.loop)
 
     async def __check_phone(
-        self, prompt: str = "Phone-related method requested, enter phone number first: "
+            self,
+            prompt: str = "Phone-related method requested, enter wallet's phone number first: ",
     ):
         """
         Check if developer entered phone for initialized class :xcl:
@@ -212,7 +212,7 @@ class Wallet(Requests):
         transaction_id: int,
         transaction_type: str,
         ftype: str,
-        destination_dir: str = ".",
+            destination_dir: str = "aioqiwi_tmp/",
         filename: str = None,
     ) -> str:
         """
@@ -236,9 +236,7 @@ class Wallet(Requests):
         params = {"type": transaction_type.upper(), "format": ftype.upper()}
 
         async with self._get(url, params=params) as response:
-            destination = (
-                f"{destination_dir}/{filename or transaction_id}.{ftype.lower()}"
-            )
+            destination = f"{destination_dir}/{filename or 'aioqiwi_' + str(transaction_id)}'.{ftype.lower()}"
             binary = await response.read()
             if aiofiles:
                 async with aiofiles.open(destination, "wb") as fp:
@@ -257,7 +255,7 @@ class Wallet(Requests):
         transactions_type: int = None,
         *,
         send_test_notification: bool = False,
-        _none_model: bool = False
+            _none_model: bool = False,
     ) -> webhooks.Hooks:
         """
         Register and manage your web-hooks
@@ -274,7 +272,9 @@ class Wallet(Requests):
             url = Urls.Hooks.test if send_test_notification else Urls.Hooks.active
             async with self._get(url) as response:
                 if not send_test_notification:
-                    return await self._make_return(response, webhooks.Hooks, force_non_model=_none_model)
+                    return await self._make_return(
+                        response, webhooks.Hooks, force_non_model=_none_model
+                    )
                 else:
                     raise ValueError("Nothing will be done with that arg passing!")
 
@@ -283,7 +283,9 @@ class Wallet(Requests):
         )
 
         async with self._put(url, params=params) as response:
-            return await self._make_return(response, webhooks.Hooks, force_non_model=_none_model)
+            return await self._make_return(
+                response, webhooks.Hooks, force_non_model=_none_model
+            )
 
     async def delete_hooks(self, hook_id: str = None) -> dict:
         """
@@ -293,7 +295,7 @@ class Wallet(Requests):
         """
         if not hook_id:
             hook = await self.hooks()
-            hook_id = hook['hookId'] if isinstance(hook, dict) else hook.hook_id
+            hook_id = hook["hookId"] if isinstance(hook, dict) else hook.hook_id
 
         url = Urls.Hooks.delete.format(hook_id)
         async with self._delete(url) as response:
@@ -310,10 +312,14 @@ class Wallet(Requests):
         """
 
         active = await self.hooks(_none_model=True)
-        if 'hookId' in active:
+        if "hookId" in active:
             await self.delete_hooks(active["hookId"])
         else:
-            warn("Seems you didn't have registered webhooks. Setting new to %s" % new_url, RuntimeWarning)
+            warn(
+                "Seems you didn't have registered webhooks. Setting new to %s"
+                % new_url,
+                RuntimeWarning,
+            )
 
         return await self.hooks(new_url, transactions_types)
 
@@ -381,13 +387,13 @@ class Wallet(Requests):
         ccode = get_currency(currency).isoformat
 
         data = serialize(
-                {
-                    "id": datetime.datetime.utcnow().timestamp().__int__().__str__(),
-                    "sum": {"amount": round(float(amount), 2), "currency": ccode},
-                    "paymentMethod": {"type": "Account", "accountId": ccode},
-                    "fields": fields or {"account": parse_phone(receiver)},
-                    "comment": comment,
-                }
+            {
+                "id": datetime.datetime.utcnow().timestamp().__int__().__str__(),
+                "sum": {"amount": round(float(amount), 2), "currency": ccode},
+                "paymentMethod": {"type": "Account", "accountId": ccode},
+                "fields": fields or {"account": parse_phone(receiver)},
+                "comment": comment,
+            }
         )
 
         async with self._post(url, data=data) as response:
@@ -430,7 +436,7 @@ class Wallet(Requests):
         Helper for getting phone number's enums.Provider id
         :param phone: pass phone number or
                       it will try to get passed phone_number in initialization otherwise ask you to enter
-        :return: enums.Provider object
+        :return: Provider object
         """
         url = Urls.Payments.providers
         params = params_filter(
@@ -460,17 +466,19 @@ class Wallet(Requests):
         :param port: server port that open for tcp/ip trans.
         :param path: path for qiwi that will send requests
         :param app: pass web.Application if you want, common-use - aiogram powered webhook-bots
-        :return:
         """
 
         try:
             if on_startup:
                 self.loop.create_task(on_startup)
         except Exception as error:
-            warn(f'Your passed coroutine failed to execute with traceback {error}')
+            warn(
+                f"{on_startup} cannot be converted into the `Future` | {error!r}: {error!s}"
+            )
 
         app = app or web.Application()
         server.setup(self._handler, app, path)
+
         web.run_app(app, host=host, port=port)
 
     def configure_for_app(self, app, path=None):
@@ -478,7 +486,7 @@ class Wallet(Requests):
         If you want to implement your start_webhook execution use this method and get configured listener with
         configured web-view for passed path[see default in webhooks/server.py]
         :param app: aiohttp.web.Application initialized
-        :param path:
+        :param path: url path
         """
         server.setup(self._handler, app, path)
 
@@ -491,13 +499,6 @@ class Wallet(Requests):
 
     async def close(self):
         await self._session.close()
-
-    # `async with` block
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()
 
 
 class _Payments:

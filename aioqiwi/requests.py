@@ -1,19 +1,19 @@
-import json
 import importlib
+import json
 import logging
 
-from .models import utils, exceptions
 from .exceptions import ApiBaseException
+from .models import utils, exceptions
 
 # DEFAULT MOSCOW-TIMEZONE
 MOSCOW_TZD = "03:00"
-DATETIME_FMT = '%Y-%m-%dT%H:%M:%S+{}'
+DATETIME_FMT = "%Y-%m-%dT%H:%M:%S+{}"
 
-logger = logging.getLogger('aioqiwi')
+logger = logging.getLogger("aioqiwi")
 
 serialize = json.dumps
 deserialize = json.loads
-json_module = 'json'
+json_module = "json"
 
 # get json (d1)e(n2)coder
 for json_lib in ["rapidjson", "ujson"]:
@@ -35,7 +35,9 @@ class Requests:
 
     as_model = True
 
-    async def _make_return(self, resp, *models, spec_ignore=False, force_non_model=False):
+    async def _make_return(
+            self, resp, *models, spec_ignore=False, force_non_model=False
+    ):
         """
         todo: BETTER-ERROR HANDLING
         Convenient way to do return
@@ -70,5 +72,11 @@ class Requests:
 
     @property
     def listeners(self):
-        if hasattr(self, '_handler'):
+        if hasattr(self, "_handler"):
             return self._handler.registered_handlers
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()  # noqa

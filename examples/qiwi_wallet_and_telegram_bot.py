@@ -6,10 +6,10 @@ Before running install aiogram, cool telegram bot-api wrapper
         pip install aiogram
 
 """
-from aioqiwi.wallet import Wallet, QiwiUpdate
-from aioqiwi.utils import BeautifulSum
-
 from aiogram import Bot
+
+from aioqiwi.utils import BeautifulSum
+from aioqiwi.wallet import Wallet, QiwiUpdate
 
 ME = 124191486  # your telegram user id
 
@@ -27,10 +27,7 @@ async def new_payment(event: QiwiUpdate):
 
 
 async def on_startup():
-    await bot.send_message(ME, 'Bot is starting')
+    await bot.send_message(ME, "Bot is starting")
 
 
-qiwi.idle(
-    on_startup(),
-    port=1488
-)
+qiwi.idle(on_startup(), port=1488)

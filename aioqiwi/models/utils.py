@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from .exceptions import ModelConversionError
 
@@ -29,7 +29,7 @@ def to_upper_camel_case(s: str):
 
 def to_lower_camel_case(s: str):
     """
-    Returns lowerCased `s`
+    Returns lowerCamelCased `s`
     """
     s = to_upper_camel_case(s)
     return s[0].lower() + s[1:]
@@ -56,7 +56,7 @@ def _raw_base_json_to_model(data: dict, model):
 
 def hasattribute(model, attribute, val) -> bool:
     """
-    Check if attribute exists in class
+    Check if attribute exists in class checking from a raw qiwi update
     :param model: raw not initialized model
     :param attribute: model attribute
     :param val: value of attribute
@@ -64,9 +64,12 @@ def hasattribute(model, attribute, val) -> bool:
     """
 
     if isinstance(val, dict):
+        if getattr(model, "_field_free_aioqiwi_model"):
+            return True
+
         return hasattr(model, to_upper_camel_case(attribute))
 
-    return to_snake_case(attribute) in vars(model)['__annotations__']
+    return to_snake_case(attribute) in vars(model)["__annotations__"]
 
 
 def json_to_model(data: dict, model_type, model_to_list=None):
@@ -85,7 +88,10 @@ def json_to_model(data: dict, model_type, model_to_list=None):
                 setattr(
                     model,
                     to_snake_case(key),
-                    [_raw_base_json_to_model(init_val, model_to_list) for init_val in val],
+                    [
+                        _raw_base_json_to_model(init_val, model_to_list)
+                        for init_val in val
+                    ],
                 )
 
             else:
@@ -96,7 +102,9 @@ def json_to_model(data: dict, model_type, model_to_list=None):
     return model
 
 
-def ignore_specs_get_list_of_models(data: dict or list, model) -> List[type("model")]:
+def ignore_specs_get_list_of_models(
+        data: Union[list, dict], model
+) -> List[type("model")]:
     """
     Converts json-array/json to models in list
     """

@@ -1,28 +1,27 @@
 import asyncio
-import logging
-import datetime
-import uuid
 import base64
-from typing import Union
+import datetime
+import logging
+import typing
+import uuid
 
 from aiohttp import web
 
-from .models import sent_invoice, refund
 from .handler import Handler
+from .models import sent_invoice, refund
 from .server import setup
-
-from ..urls import Urls
 from ..requests import Requests, serialize
+from ..urls import Urls
 from ..utils.currencies.currency_utils import Currency
 from ..utils.phone import parse_phone
-from ..utils.requests import new_http_session, params_filter, get_currency
+from ..utils.requests import new_http_session, get_currency
 
 logger = logging.getLogger("aioqiwi")
-_get_loop = asyncio.get_event_loop  # noqa
+loop = asyncio.get_event_loop()  # noqa
 
 
 class QiwiKassa(Requests):
-    def __init__(self, api_hash: str, loop: asyncio.AbstractEventLoop = None):
+    def __init__(self, api_hash: str):
         """
         Beta of kassa.qiwi.com currently developing
         :param api_hash: Qiwi unique token given for an account
@@ -38,7 +37,7 @@ class QiwiKassa(Requests):
         self._delete = session.delete
         self._patch = session.patch
 
-        self.loop = loop or _get_loop()
+        self.loop = loop
         self._handler = Handler(self.loop)
 
     @staticmethod
@@ -57,11 +56,11 @@ class QiwiKassa(Requests):
     async def new_bill(
             self,
             amount: float,
-            peer: Union[str, int] = None,
+            peer: typing.Union[str, int] = None,
             peer_email: str = None,
-            lifetime: Union[int, datetime.datetime] = 10,
+            lifetime: typing.Union[int, datetime.datetime] = 10,
             *,
-            currency: Union[str, int, Currency] = Currency["643"],
+            currency: typing.Union[str, int, Currency] = Currency["643"],
             comment: str = "aioqiwi-check",
             bill_id: str = None,
             custom_fields: dict = None
@@ -84,18 +83,15 @@ class QiwiKassa(Requests):
             lifetime = datetime.datetime.now() + datetime.timedelta(days=lifetime)
 
         data = serialize(
-                {
-                    "amount": {
-                        "currency": get_currency(currency).code,
-                        "value": amount,
-                    },
-                    "comment": comment,
-                    "expirationDateTime": self.parse_date(lifetime),
-                    "customer": {
-                        "phone": parse_phone(peer),
-                        "account": peer_email} if peer and peer_email else {},
-                    "customFields": custom_fields or {},
-                }
+            {
+                "amount": {"currency": get_currency(currency).code, "value": amount},
+                "comment": comment,
+                "expirationDateTime": self.parse_date(lifetime),
+                "customer": {"phone": parse_phone(peer), "account": peer_email}
+                if peer and peer_email
+                else {},
+                "customFields": custom_fields or {},
+            }
         )
 
         async with self._put(data=data, url=url) as response:
@@ -128,7 +124,7 @@ class QiwiKassa(Requests):
             bill_id: str,
             refund_id: str,
             amount: float = None,
-            currency: Union[str, int] = None,
+            currency: typing.Union[str, int] = None,
     ) -> refund.Refund:
         """
         Refund user's money, pass amount and currency to refund, else will get info about refund
@@ -182,10 +178,3 @@ class QiwiKassa(Requests):
     # session-related
     async def close(self):
         await self._session.close()
-
-    # `async with` block
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()

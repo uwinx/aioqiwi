@@ -32,7 +32,9 @@ class Handler:
             txn_types.remove("IN")
 
         elif all(not x and x is not None for x in (outgoing, incoming)):
-            raise ValueError(f"Why the fuck do you need this handler")
+            raise ValueError(
+                f"Why do you need this handler? Nothing will be catched to this."
+            )
 
         def decorator(event_handler):
             ffilters = list(filters)
