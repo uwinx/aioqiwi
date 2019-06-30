@@ -7,7 +7,7 @@ WORK_DIR = pathlib.Path(__file__).parent
 
 code = (WORK_DIR / "aioqiwi" / "__init__.py").read_text("utf-8")
 try:
-    version = re.findall(r"^__version__ = '([^']+)'\r?$", code, re.M)[0]
+    version = re.findall(r"""^__version__ = "([^']+)"\r?$""", code, re.M)[0]
 except IndexError:
     raise RuntimeError("Unable to determine version.")
 
