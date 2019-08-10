@@ -14,23 +14,40 @@ def __base_field_chain(update):
     return hasattr(update, "Payment") and update.Payment is not None
 
 
-def _rec_gettatr(obj, attr_path):
-    main, *child = attr_path.split(".", maxsplit=1)
-    if not child:
-        new_obj = getattr(obj, attr_path, None)
-        if not new_obj:
-            raise AttributeError(
-                f"Incorrect attribute path {attr_path} for object {obj!s}"
-            )
-        return new_obj
-    return _rec_gettatr(getattr(obj, *child), main)
+def _rec_getattr(obj, attr_path, default=None):
+    """
+    Usage:
+    >>> class A:
+    ...     class B:
+    ...         class C:
+    ...             abc = "abc"
+    ...
+    >>> assert _rec_getattr(A, "B.C.abc") == "abc"
+    """
+    try:
+        main, child = attr_path.split('.', maxsplit=1)
+    except ValueError:
+        return getattr(obj, attr_path, default)
+    return _rec_getattr(getattr(obj, child), main, default)
 
 
-def _rec_hasattr(obj, attr_path):
-    main, *child = attr_path.split(".", maxsplit=1)
-    if not child:
+def _rec_hasattr(obj, attr_path) -> bool:
+    """
+    Usage:
+    >>> class X:
+    ...     class Y:
+    ...         class Z:
+    ...             xyz = "xyz"
+    ...
+    >>> _rec_hasattr(X, "Y.Z.xyz")
+    :return:
+    :type: bool
+    """
+    try:
+        main, child = attr_path.split(".", maxsplit=1)
+    except ValueError:
         return hasattr(obj, attr_path)
-    return _rec_hasattr(getattr(obj, *child), main)
+    return _rec_hasattr(getattr(obj, child), main)
 
 
 def _ensure_field(field: typing.Union[str, BaseModel]):
@@ -50,7 +67,7 @@ def equal(field: typing.Union[str, BaseModel], value: typing.Any) -> CallableFil
     """
     field = _ensure_field(field)
 
-    return lambda update: _rec_gettatr(update, field) == value
+    return lambda update: _rec_getattr(update, field) == value
 
 
 def in_sequence(
@@ -64,14 +81,14 @@ def in_sequence(
     """
     field = _ensure_field(field)
 
-    return lambda update: _rec_gettatr(update, field) in sequence
+    return lambda update: _rec_getattr(update, field) in sequence
 
 
 def startswith(field: typing.Union[str, BaseModel], prefix: str) -> CallableFilter:
     _field = _ensure_field(field)
 
     def _startswith(update):
-        value = _rec_gettatr(update, _field)
+        value = _rec_getattr(update, _field)
         if not isinstance(value, str):
             raise UserWarning(
                 f"{field} expected to be type str got {type(value).__name__}"
