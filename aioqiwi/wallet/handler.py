@@ -40,7 +40,7 @@ class Handler:
             if isinstance(comment_regex, str):
                 ffilters.append(
                     lambda update: re.compile(comment_regex).match(
-                        update.payment.comment
+                        update.Payment.comment
                     )
                 )
 
