@@ -46,12 +46,7 @@ class QiwiKassa(Requests):
         Generates unique bill_id
         However you can implement your generator :idk:
         """
-        return (
-            base64.urlsafe_b64encode(uuid.uuid3(uuid.uuid4(), "").bytes)
-                .decode()
-                .rstrip("=")
-                .upper()
-        )
+        return base64.urlsafe_b64encode(uuid.uuid3(uuid.uuid4(), "").bytes).decode().rstrip("=").upper()
 
     async def new_bill(
             self,
@@ -84,13 +79,13 @@ class QiwiKassa(Requests):
 
         data = serialize(
             {
-                "amount": {"currency": get_currency(currency).code, "value": amount},
-                "comment": comment,
+                "amount":             {"currency": get_currency(currency).code, "value": amount},
+                "comment":            comment,
                 "expirationDateTime": self.parse_date(lifetime),
-                "customer": {"phone": parse_phone(peer), "account": peer_email}
-                if peer and peer_email
-                else {},
-                "customFields": custom_fields or {},
+                "customer":           {"phone": parse_phone(peer), "account": peer_email}
+                                      if peer and peer_email
+                                      else {},
+                "customFields":       custom_fields or {},
             }
         )
 

@@ -47,7 +47,7 @@ class BaseWebHookView(web.View):
         """
         Process POST request with validating, further deserialization and resolving BASE
         """
-        self.validate_ip()
+        # self.validate_ip()
 
         update = await self.parse_update()
         await self._resolve_update(update)  # here can be create_task instead of await
@@ -62,7 +62,7 @@ class BaseWebHookView(web.View):
             if all(func(update) for func in funcs):
                 if attr_eq:
                     if all(
-                        getattr(update, key) == attr for key, attr in attr_eq.items()
+                            getattr(update, key) == attr for key, attr in attr_eq.items()
                     ):
                         self.request.app["_dispatcher"].loop.create_task(
                             callback(update)

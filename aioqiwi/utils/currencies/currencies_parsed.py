@@ -1,7 +1,7 @@
 # SOURCES: codes_number: https://www.iban.com/currency-codes
 # aioqiwi/utils/currencies/data/currencies.json
-from typing import Union
 from dataclasses import dataclass
+from typing import Union, Optional
 
 
 @dataclass
@@ -13,7 +13,7 @@ class Currency:
     rounding: Union[int, float]
     symbol: str
     symbol_native: str
-    isoformat: str = None
+    isoformat: Optional[str]
 
 
 codes_number = {

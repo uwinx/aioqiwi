@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-
 from typing import List
 
 from ...models.base_api_model import BaseModel

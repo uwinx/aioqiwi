@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from ...models.utils import to_lower_camel_case
 from ...models.base_api_model import BaseModel
+from ...models.utils import to_lower_camel_case
 
 
 @dataclass(init=False)
@@ -52,10 +52,10 @@ class AuthUser(BaseModel):
 
 class Me(BaseModel):
     def __init__(
-        self,
-        auth_info_enabled: bool = True,
-        contact_info_enabled: bool = True,
-        user_info_enabled: bool = True,
+            self,
+            auth_info_enabled: bool = True,
+            contact_info_enabled: bool = True,
+            user_info_enabled: bool = True,
     ):
         self.auth_info_enabled = auth_info_enabled
         self.contract_info_enabled = contact_info_enabled

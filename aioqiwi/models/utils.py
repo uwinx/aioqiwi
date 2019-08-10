@@ -64,8 +64,8 @@ def hasattribute(model, attribute, val) -> bool:
     """
 
     if isinstance(val, dict):
-        if getattr(model, "_field_free_aioqiwi_model"):
-            return True
+        # if getattr(model, "_field_free_aioqiwi_model"):
+        #     return True
 
         return hasattr(model, to_upper_camel_case(attribute))
 
@@ -77,7 +77,7 @@ def json_to_model(data: dict, model_type, model_to_list=None):
     Converts json-type(dict) to model
     """
     model = model_type()
-
+    data = {to_snake_case(k): v for k, v in data.items()}
     for key, val in data.items():
         if hasattribute(model_type, key, val):
             if isinstance(val, dict):
@@ -102,9 +102,7 @@ def json_to_model(data: dict, model_type, model_to_list=None):
     return model
 
 
-def ignore_specs_get_list_of_models(
-        data: Union[list, dict], model
-) -> List[type("model")]:
+def ignore_specs_get_list_of_models(data: Union[list, dict], model) -> List[type("model")]:
     """
     Converts json-array/json to models in list
     """

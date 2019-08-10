@@ -19,18 +19,22 @@ class QiwiUpdate(BaseModel):
         account: str
         comment: str
         provider: int
+        sign_fields: str
 
         @dataclass(init=False)
         class Sum(BaseModel):
             amount: float
             currency: int
-            commission: int
+
+        @dataclass(init=False)
+        class Commission(BaseModel):
+            amount: float
+            currency: int
 
         @dataclass(init=False)
         class Total(BaseModel):
             amount: float
             currency: int
-            sign_fields: str
 
     hash: str
     version: str

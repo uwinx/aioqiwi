@@ -11,9 +11,7 @@ class Handler:
         self.loop = loop or asyncio.get_event_loop()
         self.handlers = []  # [(callback, *funcs, **kwarg-filters)]
 
-    def payment_event(
-        self, *func_filters, comment_regex=None, incoming=None, outgoing=None, **kwargs
-    ):
+    def payment_event(self, *func_filters, comment_regex=None, incoming=None, outgoing=None, **kwargs):
         """
         Payments handler
         :param func_filters: pass your one-argument function, that argument is QiwiUpdate
@@ -47,7 +45,7 @@ class Handler:
                 )
 
             if txn_types:
-                ffilters.append(lambda update: update.payment.type in txn_types)
+                ffilters.append(lambda update: update.Payment.type in txn_types)
 
             self.handlers.append((event_handler, ffilters, kwargs))
 

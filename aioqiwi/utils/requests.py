@@ -1,7 +1,7 @@
 from aiohttp import client
 
-from ..utils.currencies.currency_utils import Currency
 from ..requests import serialize
+from ..utils.currencies.currency_utils import Currency
 
 
 def params_filter(dictionary: dict):
@@ -26,7 +26,7 @@ def get_currency(currency):
 
 
 def new_http_session(
-    api_hash: str, timeout: float or int = None, *, ctype: str = None, atype: str = None
+        api_hash: str, timeout: float or int = None, *, ctype: str = None, atype: str = None
 ):
     """
     Create new instance of ClientSession
@@ -37,8 +37,8 @@ def new_http_session(
     :return: aiohttp.client.ClientSession
     """
     headers = {
-        "Accept": atype or "application/json",
-        "Content-type": ctype or "application/json",
+        "Accept":        atype or "application/json",
+        "Content-type":  ctype or "application/json",
         "Authorization": f"Bearer {api_hash}" if api_hash else None,  # eg:maps
     }
 

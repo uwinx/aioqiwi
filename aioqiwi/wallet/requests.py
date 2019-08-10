@@ -108,7 +108,7 @@ class Wallet(Requests):
 
     # identification region
     async def identification(
-        self, identification_class: idwidget.IdentificationWidget = None
+            self, identification_class: idwidget.IdentificationWidget = None
     ) -> identification.Identification:
         """
         Get your current identification status, or pass identificationWidget class to request qiwi to verify you
@@ -130,15 +130,15 @@ class Wallet(Requests):
 
     # region payment statistics, payment-cheques, history
     async def history(
-        self,
-        rows: int,
-        *,
-        operation: enums.PaymentTypes = enums.PaymentTypes.ALL,
-        sources: list = None,
-        from_date: Union[str, datetime.datetime] = None,
-        to_date: Union[str, datetime.datetime] = None,
-        offset_date: Union[str, datetime.datetime] = None,
-        offset_id: int = None,
+            self,
+            rows: int,
+            *,
+            operation: enums.PaymentTypes = enums.PaymentTypes.ALL,
+            sources: list = None,
+            from_date: Union[str, datetime.datetime] = None,
+            to_date: Union[str, datetime.datetime] = None,
+            offset_date: Union[str, datetime.datetime] = None,
+            offset_id: int = None,
     ) -> history.HistoryList:
         """
         Get payments history from new to old
@@ -158,13 +158,13 @@ class Wallet(Requests):
 
         params = params_filter(
             {
-                "rows": rows,
-                "operation": operation,
-                "sources": sources,
-                "startDate": self.parse_date(from_date) if from_date else None,
-                "endDate": self.parse_date(to_date) if to_date else None,
+                "rows":        rows,
+                "operation":   operation,
+                "sources":     sources,
+                "startDate":   self.parse_date(from_date) if from_date else None,
+                "endDate":     self.parse_date(to_date) if to_date else None,
                 "nextTxnDate": self.parse_date(offset_date) if offset_date else None,
-                "nextTxnId": offset_id,
+                "nextTxnId":   offset_id,
             }
         )
 
@@ -174,13 +174,13 @@ class Wallet(Requests):
             )
 
     async def stats(
-        self,
-        *,
-        from_date: Union[str, datetime.datetime] = datetime.datetime.now()
-        - datetime.timedelta(days=89),
-        to_date: Union[str, datetime.datetime] = datetime.datetime.now(),
-        operation: enums.PaymentTypes = enums.PaymentTypes.ALL,
-        sources: enums.PaymentSources = None,
+            self,
+            *,
+            from_date: Union[str, datetime.datetime] = datetime.datetime.now()
+                                                       - datetime.timedelta(days=89),
+            to_date: Union[str, datetime.datetime] = datetime.datetime.now(),
+            operation: enums.PaymentTypes = enums.PaymentTypes.ALL,
+            sources: enums.PaymentSources = None,
     ) -> stats.Stats:
         """
         Get statistics of payments
@@ -198,9 +198,9 @@ class Wallet(Requests):
         params = params_filter(
             {
                 "operation": operation,
-                "sources": sources,
+                "sources":   sources,
                 "startDate": self.parse_date(from_date),
-                "endDate": self.parse_date(to_date),
+                "endDate":   self.parse_date(to_date),
             }
         )
 
@@ -208,12 +208,12 @@ class Wallet(Requests):
             return await self._make_return(response, stats.Stats, stats.Payment)
 
     async def cheque(
-        self,
-        transaction_id: int,
-        transaction_type: str,
-        ftype: str,
+            self,
+            transaction_id: int,
+            transaction_type: str,
+            ftype: str,
             destination_dir: str = "aioqiwi_tmp/",
-        filename: str = None,
+            filename: str = None,
     ) -> str:
         """
         Get cheque for transaction available types: JPEG, PDF
@@ -226,10 +226,10 @@ class Wallet(Requests):
         url = Urls.cheque.format(transaction_id)
 
         if not all(
-            (
-                enums.ChequeTypes.has(ftype.upper()),
-                enums.PaymentTypes.has(transaction_type.upper()),
-            )
+                (
+                        enums.ChequeTypes.has(ftype.upper()),
+                        enums.PaymentTypes.has(transaction_type.upper()),
+                )
         ):
             raise ValueError("Unknown file type or transaction type")
 
@@ -250,11 +250,11 @@ class Wallet(Requests):
 
     # region web-hooks
     async def hooks(
-        self,
-        url: str = None,
-        transactions_type: int = None,
-        *,
-        send_test_notification: bool = False,
+            self,
+            url: str = None,
+            transactions_type: int = None,
+            *,
+            send_test_notification: bool = False,
             _none_model: bool = False,
     ) -> webhooks.Hooks:
         """
@@ -302,7 +302,7 @@ class Wallet(Requests):
             return await response.json()
 
     async def new_hooks(
-        self, new_url: str, transactions_types: int = 2
+            self, new_url: str, transactions_types: int = 2
     ) -> webhooks.Hooks:
         """
         NON-API EXCLUSIVE method to `reset` your current webhook details
@@ -362,13 +362,13 @@ class Wallet(Requests):
 
     # payments region
     async def transaction(
-        self,
-        amount: Union[int, float],
-        receiver: Union[int, str],
-        currency: Union[Currency, str, int] = Currency["643"].isoformat,
-        provider_id: enums.Provider = enums.Provider.QIWI_WALLET.value,
-        comment: str = "via aioqiwi",
-        fields: dict = None,
+            self,
+            amount: Union[int, float],
+            receiver: Union[int, str],
+            currency: Union[Currency, str, int] = Currency["643"].isoformat,
+            provider_id: enums.Provider = enums.Provider.QIWI_WALLET.value,
+            comment: str = "via aioqiwi",
+            fields: dict = None,
     ) -> payment.Payment:
         """
         |Make base transaction| sends to qiwi wallet by default [WARNING] if you are not sure about param-passing
@@ -388,11 +388,11 @@ class Wallet(Requests):
 
         data = serialize(
             {
-                "id": datetime.datetime.utcnow().timestamp().__int__().__str__(),
-                "sum": {"amount": round(float(amount), 2), "currency": ccode},
+                "id":            datetime.datetime.utcnow().timestamp().__int__().__str__(),
+                "sum":           {"amount": round(float(amount), 2), "currency": ccode},
                 "paymentMethod": {"type": "Account", "accountId": ccode},
-                "fields": fields or {"account": parse_phone(receiver)},
-                "comment": comment,
+                "fields":        fields or {"account": parse_phone(receiver)},
+                "comment":       comment,
             }
         )
 
@@ -400,12 +400,12 @@ class Wallet(Requests):
             return await self._make_return(response, payment.Payment)
 
     async def commission(
-        self,
-        amount: float,
-        receiver: Union[str, int],
-        provider: Union[enums.Provider] = enums.Provider.QIWI_WALLET,
-        *,
-        currency: Union[Currency, str, int] = Currency["643"].isoformat,
+            self,
+            amount: float,
+            receiver: Union[str, int],
+            provider: Union[enums.Provider] = enums.Provider.QIWI_WALLET,
+            *,
+            currency: Union[Currency, str, int] = Currency["643"].isoformat,
     ) -> List[commission_model.Commission]:
         """
         Get commission info for a transaction
@@ -420,8 +420,8 @@ class Wallet(Requests):
         currency = get_currency(currency).isoformat
         data = serialize(
             {
-                "account": parse_phone(receiver),
-                "paymentMethod": {"type": "Account", "accountId": currency},
+                "account":        parse_phone(receiver),
+                "paymentMethod":  {"type": "Account", "accountId": currency},
                 "purchaseTotals": {"total": {"amount": amount, "currency": currency}},
             }
         )
@@ -430,7 +430,7 @@ class Wallet(Requests):
             return await self._make_return(response, commission_model.Commission)
 
     async def detect_provider(
-        self, phone: Union[str, int] = None
+            self, phone: Union[str, int] = None
     ) -> phone_provider.Provider:
         """
         Helper for getting phone number's enums.Provider id
@@ -442,13 +442,13 @@ class Wallet(Requests):
         params = params_filter(
             {
                 "phone": self.phone_number or await self.__check_phone()
-                if not phone
-                else parse_phone(phone)
+                         if not phone
+                         else parse_phone(phone)
             }
         )
 
         headers = {
-            "Accept": "application/json",
+            "Accept":       "application/json",
             "Content-type": "application/x-www-form-urlencoded",
         }
 

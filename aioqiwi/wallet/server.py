@@ -1,15 +1,14 @@
 import ipaddress
-import typing
 import logging
+import typing
 
 from aiohttp.web import Application
 
-from ..wallet.models import updates
 from ..models import utils
 from ..requests import deserialize
 from ..server import BaseWebHookView
 from ..wallet.handler import Handler
-
+from ..wallet.models import updates
 
 logger = logging.getLogger("aioqiwi")
 
@@ -61,7 +60,7 @@ class QiwiWalletWebView(BaseWebHookView):
         Deserialize update and create new update class
         :return: :class:`updated.QiwiUpdate`
         """
-        data = await self.request.json()
+        data = await self.request.text()
         return utils.json_to_model(deserialize(data), updates.QiwiUpdate)
 
 
