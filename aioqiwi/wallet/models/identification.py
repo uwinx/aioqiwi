@@ -5,6 +5,7 @@ from ...models.base_api_model import BaseModel
 
 @dataclass(init=False)
 class Identification(BaseModel):
+    id: int
     birth_date: str
     first_name: str
     inn: str
@@ -13,7 +14,7 @@ class Identification(BaseModel):
     oms: str
     passport: str
     snils: str
-    type: str = None
+    type: str
 
     def __repr__(self):
         return (

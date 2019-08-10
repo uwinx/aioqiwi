@@ -1,0 +1,109 @@
+# todo implement filters stack for common filters
+
+import typing
+import re
+
+from ..models.base_api_model import BaseModel
+
+CallableFilter = typing.Callable[[typing.Any], bool]
+redundant_repr_chars_table = {ord(i): None for i in "\"'>"}
+
+
+# private region
+def __base_field_chain(update):
+    return hasattr(update, "Payment") and update.Payment is not None
+
+
+def _rec_gettatr(obj, attr_path):
+    main, *child = attr_path.split(".", maxsplit=1)
+    if not child:
+        new_obj = getattr(obj, attr_path, None)
+        if not new_obj:
+            raise AttributeError(
+                f"Incorrect attribute path {attr_path} for object {obj!s}"
+            )
+        return new_obj
+    return _rec_gettatr(getattr(obj, *child), main)
+
+
+def _rec_hasattr(obj, attr_path):
+    main, *child = attr_path.split(".", maxsplit=1)
+    if not child:
+        return hasattr(obj, attr_path)
+    return _rec_hasattr(getattr(obj, *child), main)
+
+
+def _ensure_field(field: typing.Union[str, BaseModel]):
+    if isinstance(field, BaseModel):
+        *_, field = str(field).translate(redundant_repr_chars_table).split(".", 2)
+
+    return field
+
+
+# public region
+def equal(field: typing.Union[str, BaseModel], value: typing.Any) -> CallableFilter:
+    """
+    Check values equality
+    :param field: update.{FIELD} can be X.Y.Z
+    :param value: value to compare with
+    :return callable(update)
+    """
+    field = _ensure_field(field)
+
+    return lambda update: _rec_gettatr(update, field) == value
+
+
+def in_sequence(
+    field: typing.Union[str, BaseModel], sequence: typing.Any
+) -> CallableFilter:
+    """
+    Check if fields value in sequence
+    :param field: update.{FIELD} can be X.Y.Z
+    :param sequence: sequence of values that contains(or does not) field.(value)
+    :return callable(update)
+    """
+    field = _ensure_field(field)
+
+    return lambda update: _rec_gettatr(update, field) in sequence
+
+
+def startswith(field: typing.Union[str, BaseModel], prefix: str) -> CallableFilter:
+    _field = _ensure_field(field)
+
+    def _startswith(update):
+        value = _rec_gettatr(update, _field)
+        if not isinstance(value, str):
+            raise UserWarning(
+                f"{field} expected to be type str got {type(value).__name__}"
+            )
+
+        return value.startswith(prefix)
+
+    return _startswith
+
+
+class PaymentComment:
+    @classmethod
+    def startswith(cls, prefix: str) -> CallableFilter:
+        return lambda update: __base_field_chain(update) and (
+            update.Payment.comment or ""
+        ).startswith(prefix)
+
+    @classmethod
+    def match(cls, expression: str) -> CallableFilter:
+        return lambda update: __base_field_chain(update) and re.compile(
+            expression
+        ).match(update.Payment.comment)
+
+    @classmethod
+    def __eq__(cls, comment: str) -> CallableFilter:
+        return equal(field="Payment.comment", value=comment)
+
+
+class PaymentAmount:
+    @classmethod
+    def __eq__(cls, amount: int) -> CallableFilter:
+        return equal(field="Payment.amount", value=amount)
+
+
+__all__ = ["PaymentComment", "PaymentAmount", "CallableFilter", "equal", "in_sequence"]

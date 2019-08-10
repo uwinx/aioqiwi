@@ -1,6 +1,9 @@
-from typing import List, Union
+from typing import List, Union, TypeVar
 
 from .exceptions import ModelConversionError
+
+
+T = TypeVar("T")
 
 
 def to_snake_case(s: str):
@@ -13,7 +16,7 @@ def to_snake_case(s: str):
             out += "_" + sym
         else:
             out += sym
-    return out.lower()
+    return out.lower().replace("-", "_")
 
 
 def to_upper_camel_case(s: str):
@@ -23,7 +26,7 @@ def to_upper_camel_case(s: str):
     out = s
     for n, _ in enumerate(s):
         if s[n] in "-_":
-            out = out.replace(s[n: n + 2], s[n + 1].upper(), 1)
+            out = out.replace(s[n : n + 2], s[n + 1].upper(), 1)
     return out[0].upper() + out[1:]
 
 
@@ -54,7 +57,7 @@ def _raw_base_json_to_model(data: dict, model):
     return model
 
 
-def hasattribute(model, attribute, val) -> bool:
+def has_attribute(model, attribute, val) -> bool:
     """
     Check if attribute exists in class checking from a raw qiwi update
     :param model: raw not initialized model
@@ -64,12 +67,15 @@ def hasattribute(model, attribute, val) -> bool:
     """
 
     if isinstance(val, dict):
-        if getattr(model, "_field_free_aioqiwi_model"):
-            return True
+        return hasattr(model, "_field_free_aioqiwi_model") or hasattr(
+            model, to_upper_camel_case(attribute)
+        )
 
-        return hasattr(model, to_upper_camel_case(attribute))
-
-    return to_snake_case(attribute) in vars(model)["__annotations__"]
+    return hasattr(model, "_field_free_aioqiwi_model") or to_snake_case(
+        attribute
+    ) in getattr(
+        model, "__annotations__", []
+    )  # noqa
 
 
 def json_to_model(data: dict, model_type, model_to_list=None):
@@ -79,12 +85,17 @@ def json_to_model(data: dict, model_type, model_to_list=None):
     model = model_type()
 
     for key, val in data.items():
-        if hasattribute(model_type, key, val):
+        if has_attribute(model_type, key, val):
             if isinstance(val, dict):
                 new_model = getattr(model, to_upper_camel_case(key))
                 setattr(model, to_upper_camel_case(key), json_to_model(val, new_model))
 
             elif isinstance(val, list):
+                if not model_to_list:
+                    # assume having List[type] declared
+                    model_to_list = model.__annotations__.get(
+                        to_snake_case(key)
+                    ).__args__[0]
                 setattr(
                     model,
                     to_snake_case(key),
@@ -102,9 +113,7 @@ def json_to_model(data: dict, model_type, model_to_list=None):
     return model
 
 
-def ignore_specs_get_list_of_models(
-        data: Union[list, dict], model
-) -> List[type("model")]:
+def ignore_specs_get_list_of_models(data: Union[list, dict], model: T) -> List[T]:
     """
     Converts json-array/json to models in list
     """
@@ -121,6 +130,6 @@ def ignore_specs_get_list_of_models(
                     items.append(json_to_model(init_dict, model))
 
     else:
-        raise ValueError(f"Expected type list or dict, got {type(data)}")
+        raise ValueError(f"Expected type list or dict, got {type(data).__name__}")
 
     return items

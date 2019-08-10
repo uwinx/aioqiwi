@@ -54,7 +54,7 @@ def allow_ip(*ips: typing.Union[str, ipaddress.IPv4Network, ipaddress.IPv4Addres
 
 
 class QiwiWalletWebView(BaseWebHookView):
-    _check_ip = _check_ip
+    _check_ip = staticmethod(_check_ip)
 
     async def parse_update(self) -> updates.QiwiUpdate:
         """

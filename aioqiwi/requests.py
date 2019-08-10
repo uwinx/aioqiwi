@@ -16,7 +16,7 @@ deserialize = json.loads
 json_module = "json"
 
 # get json (d1)e(n2)coder
-for json_lib in ["rapidjson", "ujson"]:
+for json_lib in ["orjson", "ujson", "rapidjson"]:
     try:
         serialize = importlib.import_module(json_lib).dumps
         deserialize = importlib.import_module(json_lib).loads
@@ -36,7 +36,7 @@ class Requests:
     as_model = True
 
     async def _make_return(
-            self, resp, *models, spec_ignore=False, force_non_model=False
+        self, resp, *models, spec_ignore=False, force_non_model=False
     ):
         """
         todo: BETTER-ERROR HANDLING

@@ -6,6 +6,11 @@ class MetaEnum(Enum):
     def has(cls, item):
         return any(item == var.value for var in cls)
 
+    @classmethod
+    def where(cls, value: str) -> "MetaEnum":
+        occ = [item for item in cls if (item.value == value) or (item == value)]
+        return occ[-1] if occ else None
+
 
 class PaymentTypes(MetaEnum):
     incoming = IN = "IN"

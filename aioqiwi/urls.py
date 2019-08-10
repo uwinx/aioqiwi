@@ -9,7 +9,7 @@ class Urls:
     me = urljoin(BASE, "person-profile/v1/profile/current")
     identification = urljoin(BASE, "identification/v1/persons/{}/identification")
     history = urljoin(BASE, "payment-history/v2/persons/{}/payments")
-    stats = urljoin(history, "total")
+    stats = urljoin(BASE, "payment-history/v1/persons/{}/payments/total")
     cheque = urljoin(BASE, "payment-history/v1/transactions/{}/cheque/file")
 
     class Hooks:
@@ -28,7 +28,7 @@ class Urls:
         base = urljoin(BASE, "sinap/api/v2/terms/{}/payments")
         to_qiwi = base.format("99")
         providers = "https://qiwi.com/mobile/detect.action"
-        commission = urljoin(BASE, "sinap/providers/{}/onlineCommission")
+        commission = urljoin(BASE, "sinap/providers/{}/form")
 
     class P2PBillPayments:
         base = "https://api.qiwi.com/partner/bill/v1/bills/"

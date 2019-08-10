@@ -1,3 +1,4 @@
+import typing
 import logging
 
 from aiohttp import web
@@ -18,8 +19,8 @@ def not_implemented(*args, **kwargs):
 
 
 class BaseWebHookView(web.View):
-    _check_ip = not_implemented
-    parse_update = not_implemented
+    _check_ip = staticmethod(not_implemented)
+    parse_update = staticmethod(not_implemented)
 
     def validate_ip(self):
         # pulled from aiogram.dispatcher.webhook IP-validator
@@ -54,22 +55,20 @@ class BaseWebHookView(web.View):
 
         return web.Response(text="ok", status=200)
 
+    def process_update(self, *filters: typing.Callable, update, handler):
+        if all(_filter(update) for _filter in filters):
+            self.request.app["_dispatcher"].loop.create_task(handler(update))
+
     async def _resolve_update(self, update):
         unique = get_unique(update)
 
         logger.info(f"Processing update identified as {unique}")
-        for callback, funcs, attr_eq in self.request.app["_dispatcher"].handlers:
-            if all(func(update) for func in funcs):
-                if attr_eq:
-                    if all(
-                        getattr(update, key) == attr for key, attr in attr_eq.items()
-                    ):
-                        self.request.app["_dispatcher"].loop.create_task(
-                            callback(update)
-                        )
+        for handler, filters in self.request.app["_dispatcher"].handlers:
+            callable_filters = []
+            for filter_obj in filters:
+                if hasattr(filter_obj, "stack"):
+                    callable_filters.append(*filter_obj.stack)
+                elif isinstance(filter_obj, typing.Callable):
+                    callable_filters.append(filter_obj)
 
-                else:
-                    self.request.app["_dispatcher"].loop.create_task(callback(update))
-                logger.info(f"Executing {callback.__name__}(:{unique})")
-            else:
-                logger.info(f"Ignoring {callback.__name__}(:{unique})")
+            self.process_update(*callable_filters, update=update, handler=handler)

@@ -14,11 +14,6 @@
     :target: https://www.codacy.com/app/uwinx/aioqiwi?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=uwinx/aioqiwi&amp;utm_campaign=Badge_Grade
     :alt: codacy-rating
 
-*WARNING AT CURRENT STATE AIOQIWI IS NOT PRODUCTION-READY* 
-
-
-*(!) WARNING AT CURRENT STATE AIOQIWI IS NOT PRODUCTION-READY (!)*
-
 
 **Qiwi payments for humans(for healthy humans)**
 
@@ -35,7 +30,7 @@ Installation
 ---------------
 🔸 Dependencies
 ---------------
-**aioqiwi** uses only ``aiohttp`` and that's enough, but in case you want increase perfomance of serialization and deserialization, you can install ``ujson`` or ``rapidjson``
+**aioqiwi** uses only ``aiohttp`` and that's enough, but in case you want increase perfomance of serialization and deserialization, you can install ``ujson`` or ``orjson`` or ``rapidjson``
 
 
 -------------------
@@ -69,16 +64,17 @@ Installation
 
 .. code:: python
 
-    from aioqiwi.wallet import QiwiUpdate, Wallet
+    from aioqiwi.wallet import QiwiUpdate, Wallet, filters
     from aioqiwi.utils import BeautifulSum
 
     wallet = Wallet("...")
+    only_incoming = filters.equal("Payment.type", "IN")
 
-    @wallet.on_update(incoming=True)
+    @wallet.on_update(only_incoming)
     async def payments_handler(event: QiwiUpdate):
         print(f"{event.Payment.account} sent you {BeautifulSum(event.Payment).pretty}")
 
-    @wallet.on_update(incoming=True, comment_regex=r"^(special_code|another_special_code)+$")
+    @wallet.on_update(only_incoming, filters.PaymentComment.match(r"^(special_code|another_special_code)+$"))
     async def secret_payments_handler(event: QiwiUpdate):
         print("*tovarish mayor suspiciously*",
               f"- WHO THE HECK IS `{event.Payment.account}`, HOW DID HE GET OUR CODE?",

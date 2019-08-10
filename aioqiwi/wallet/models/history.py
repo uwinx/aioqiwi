@@ -14,10 +14,10 @@ class History(BaseModel):
         amount: int
         currency: int
 
-    currencyRate: int
+    currency_rate: int
     date: str
     error: str
-    errorCode: int
+    error_code: int
 
     @dataclass(init=False)
     class Features(BaseModel):
@@ -91,3 +91,7 @@ class HistoryList(BaseModel):
     @property
     def reversed(self):
         return reversed(self.data)
+
+    @property
+    def last(self):
+        return self.data[-1] if self.data else None

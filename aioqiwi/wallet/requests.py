@@ -4,7 +4,6 @@ import logging
 import sys
 import warnings
 from typing import List, Union
-from urllib.parse import urljoin
 
 from aiohttp import web
 
@@ -59,6 +58,11 @@ class Wallet(Requests):
         self._delete = session.delete
         self._patch = session.patch
 
+        self._empty_headers = {
+            "Accept": "application/json",
+            "Content-type": "application/json",
+        }
+
         if phone_number:
             self.phone_number = parse_phone(phone_number)
         else:
@@ -69,8 +73,8 @@ class Wallet(Requests):
         self._handler = handler.Handler(self.loop)
 
     async def __check_phone(
-            self,
-            prompt: str = "Phone-related method requested, enter wallet's phone number first: ",
+        self,
+        prompt: str = "Phone-related method requested, enter wallet's phone number first: ",
     ):
         """
         Check if developer entered phone for initialized class :xcl:
@@ -155,6 +159,7 @@ class Wallet(Requests):
         await self.__check_phone()
 
         url = Urls.history.format(self.phone_number)
+        operation = enums.PaymentTypes.where(operation).value
 
         params = params_filter(
             {
@@ -212,7 +217,7 @@ class Wallet(Requests):
         transaction_id: int,
         transaction_type: str,
         ftype: str,
-            destination_dir: str = "aioqiwi_tmp/",
+        destination_dir: str = "aioqiwi_tmp/",
         filename: str = None,
     ) -> str:
         """
@@ -236,7 +241,7 @@ class Wallet(Requests):
         params = {"type": transaction_type.upper(), "format": ftype.upper()}
 
         async with self._get(url, params=params) as response:
-            destination = f"{destination_dir}/{filename or 'aioqiwi_' + str(transaction_id)}'.{ftype.lower()}"
+            destination = f"{destination_dir}/{filename or ('aioqiwi_' + str(transaction_id))}'.{ftype.lower()}"
             binary = await response.read()
             if aiofiles:
                 async with aiofiles.open(destination, "wb") as fp:
@@ -255,7 +260,7 @@ class Wallet(Requests):
         transactions_type: int = None,
         *,
         send_test_notification: bool = False,
-            _none_model: bool = False,
+        _none_model: bool = False,
     ) -> webhooks.Hooks:
         """
         Register and manage your web-hooks
@@ -399,7 +404,13 @@ class Wallet(Requests):
         async with self._post(url, data=data) as response:
             return await self._make_return(response, payment.Payment)
 
-    async def commission(
+    async def commission(self, *args, **kwargs):
+        # no-docs. tests keep return 404, so Deprecated
+        raise DeprecationWarning(
+            "This method is not currently supported due to qiwi-docs conflicts"
+        )
+
+    async def __commission(
         self,
         amount: float,
         receiver: Union[str, int],
@@ -415,7 +426,7 @@ class Wallet(Requests):
         :param currency: ISO of currency DEFAULT and the only acceptable(from qiwidocs) is 643 ruble
         :return:
         """
-        url = urljoin(Urls.Payments.commission, provider)
+        url = Urls.Payments.commission.format(provider.where(provider).value)
 
         currency = get_currency(currency).isoformat
         data = serialize(

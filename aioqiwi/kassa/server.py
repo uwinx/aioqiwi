@@ -48,7 +48,7 @@ allow_ip(*allowed_ips)
 
 
 class QiwiBillServerWebView(BaseWebHookView):
-    _check_ip = _check_ip
+    _check_ip = staticmethod(_check_ip)
 
     def hash_validator(self, update):
         sha256 = self.request.headers.get("X-Api-Signature-SHA256")
@@ -64,7 +64,7 @@ class QiwiBillServerWebView(BaseWebHookView):
             )
             != sha256
         ):
-            raise web.HTTPBadRequest(text="validation error")
+            raise web.HTTPBadRequest()
 
     async def parse_update(self) -> updates.BillUpdate:
         """
@@ -86,11 +86,7 @@ class QiwiBillServerWebView(BaseWebHookView):
 
         await self._resolve_update(update)
 
-        return web.json_response(
-            data={"error": "0"},
-            status=200,
-            headers={"Content-type": "application/json"},
-        )
+        return web.json_response(data={"error": "0"}, status=200)
 
 
 def setup(secret_key, dispatcher, app: web.Application, path=None):
