@@ -29,7 +29,7 @@ from ..wallet.models import (
 try:
     import aiofiles
 except ImportError:
-    aiofile = None
+    aiofiles = None
 
 _get_loop = asyncio.get_event_loop
 

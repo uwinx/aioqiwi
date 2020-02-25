@@ -99,7 +99,12 @@ def startswith(field: typing.Union[str, BaseModel], prefix: str) -> CallableFilt
     return _startswith
 
 
-class PaymentComment:
+class _MetaCMP(type):
+    def __eq__(self, other):
+        return NotImplemented
+
+
+class PaymentComment(metaclass=_MetaCMP):
     @classmethod
     def startswith(cls, prefix: str) -> CallableFilter:
         return lambda update: __base_field_chain(update) and (
@@ -117,7 +122,7 @@ class PaymentComment:
         return equal(field="Payment.comment", value=comment)
 
 
-class PaymentAmount:
+class PaymentAmount(metaclass=_MetaCMP):
     @classmethod
     def __eq__(cls, amount: int) -> CallableFilter:
         return equal(field="Payment.amount", value=amount)

@@ -88,11 +88,14 @@ class QiwiBillServerWebView(BaseWebHookView):
 
         return web.json_response(data={"error": "0"}, status=200)
 
+    _app_key_check_ip = "_qiwi_kassa_check_ip"
+    _app_key_dispatcher = "_qiwi_kassa_dispatcher"
+
 
 def setup(secret_key, dispatcher, app: web.Application, path=None):
     app["_secret_key"] = secret_key
-    app["_check_ip"] = _check_ip
-    app["_dispatcher"] = dispatcher
+    app[QiwiBillServerWebView._app_key_check_ip] = _check_ip
+    app[QiwiBillServerWebView._app_key_dispatcher] = dispatcher
     app.router.add_view(
         path or DEFAULT_QIWI_BILLS_WEBHOOK_PATH,
         QiwiBillServerWebView,

@@ -64,10 +64,13 @@ class QiwiWalletWebView(BaseWebHookView):
         data = await self.request.json()
         return utils.json_to_model(deserialize(data), updates.QiwiUpdate)
 
+    _app_key_check_ip = "_qiwi_wallet_check_ip"
+    _app_key_dispatcher = "_qiwi_waller_dispatcher"
+
 
 def setup(dispatcher: Handler, app: Application, path=None):
-    app["_check_ip"] = _check_ip
-    app["_dispatcher"] = dispatcher
+    app[QiwiWalletWebView._app_key_check_ip] = _check_ip
+    app[QiwiWalletWebView._app_key_dispatcher] = dispatcher
     path = path or DEFAULT_QIWI_WEBHOOK_PATH
     app.router.add_view(path, QiwiWalletWebView, name=DEFAULT_QIWI_ROUTER_NAME)
     logger.info(f"Added view to endpoint {path}")

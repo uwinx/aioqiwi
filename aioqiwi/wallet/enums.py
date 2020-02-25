@@ -1,25 +1,14 @@
-from enum import Enum
+from ..utils.autoenum import NamedEnum, auto
 
 
-class MetaEnum(Enum):
-    @classmethod
-    def has(cls, item):
-        return any(item == var.value for var in cls)
-
-    @classmethod
-    def where(cls, value: str) -> "MetaEnum":
-        occ = [item for item in cls if (item.value == value) or (item == value)]
-        return occ[-1] if occ else None
+class PaymentTypes(NamedEnum):
+    IN = auto()
+    OUT = auto()
+    QIWI_CARD = auto()
+    ALL = auto()
 
 
-class PaymentTypes(MetaEnum):
-    incoming = IN = "IN"
-    outgoing = OUT = "OUT"
-    qiwi_card = QIWI_CARD = "QIWI_CARD"
-    all = ALL = "ALL"
-
-
-class PaymentSources(MetaEnum):
+class PaymentSources(NamedEnum):
     """Источники платежа, для отбора. Каждый источник задается как отдельный параметр и нумеруется элементом массива, начиная с нуля (sources[0], sources[1] и т.д.). Допустимые значения:
     QW_RUB - рублевый счет кошелька,
     QW_USD - счет кошелька в долларах,
@@ -27,14 +16,14 @@ class PaymentSources(MetaEnum):
     CARD - привязанные и непривязанные к кошельку банковские карты,
     MK - счет мобильного оператора. Если не указаны, учитываются все источники"""
 
-    QW_RUB = "QW_USD"
-    QW_USD = "QW_USD"
-    QW_EUR = "QW_EUR"
-    CARD = "CARD"
-    MK = "MK"
+    QW_RUB = auto()
+    QW_USD = auto()
+    QW_EUR = auto()
+    CARD = auto()
+    MK = auto()
 
 
-class Provider(MetaEnum):
+class Provider(NamedEnum):
     """
     99 - Перевод на QIWI Wallet
 
@@ -72,10 +61,10 @@ class Provider(MetaEnum):
     CUSTOM = 1717
 
 
-class ChequeTypes(MetaEnum):
+class ChequeTypes(NamedEnum):
     """
     Check [Cheque]'s output type
     """
 
-    JPEG = "JPEG"
-    PDF = "PDF"
+    JPEG = auto()
+    PDF = auto()

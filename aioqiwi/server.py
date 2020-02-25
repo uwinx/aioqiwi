@@ -14,17 +14,19 @@ def get_unique(update):
     )
 
 
-def not_implemented(*args, **kwargs):
+def not_implemented_error(*args, **kwargs):
     raise NotImplementedError
 
 
 class BaseWebHookView(web.View):
-    _check_ip = staticmethod(not_implemented)
-    parse_update = staticmethod(not_implemented)
+    _check_ip = staticmethod(not_implemented_error)
+    _app_key_check_ip: str = None
+    _app_key_dispatcher: str = None
+    parse_update = staticmethod(not_implemented_error)
 
     def validate_ip(self):
         # pulled from aiogram.dispatcher.webhook IP-validator
-        if self.request.app.get("_check_ip"):
+        if self.request.app.get(self._app_key_check_ip):
             ip_address, accept = self.check_ip()
             if not accept:
                 logger.warning(f"{ip_address} is not listed as allowed IP")
@@ -56,14 +58,16 @@ class BaseWebHookView(web.View):
         return web.Response(text="ok", status=200)
 
     def process_update(self, *filters: typing.Callable, update, handler):
+        dispatcher = self.dispatcher  # matters (since we can get error and we don't want filters execute)!
         if all(_filter(update) for _filter in filters):
-            self.request.app["_dispatcher"].loop.create_task(handler(update))
+            dispatcher.loop.create_task(handler(update))
 
     async def _resolve_update(self, update):
+        dispatcher = self.dispatcher
         unique = get_unique(update)
 
         logger.info(f"Processing update identified as {unique}")
-        for handler, filters in self.request.app["_dispatcher"].handlers:
+        for handler, filters in dispatcher.handlers:
             callable_filters = []
             for filter_obj in filters:
                 if hasattr(filter_obj, "stack"):
@@ -72,3 +76,10 @@ class BaseWebHookView(web.View):
                     callable_filters.append(filter_obj)
 
             self.process_update(*callable_filters, update=update, handler=handler)
+
+    @property
+    def dispatcher(self):
+        dispatcher = self.request.app.get(self._app_key_dispatcher)
+        if not dispatcher:
+            raise ValueError(f"No attached dispatcher found to {self!r}")
+        return dispatcher

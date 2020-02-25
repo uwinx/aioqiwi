@@ -15,14 +15,7 @@ ME = 124191486  # your telegram user id
 qiwi = Wallet("MyQiwiToken")
 bot = Bot("MyBotToken")
 
-# different variations that can do the same        # ---------------------
-filters.equal("Payment.comment", "xyz")  # for cons             |
-filters.PaymentComment == "xyz"  # more elegant         |
-filters.PaymentComment.match(r"^xyz+$")  # scalable             |
-filters.in_sequence("Payment.comment", ["xyz"])  # also kinda scalable  |
 
-
-# we'll use elegant one or choose one from below
 @qiwi.on_update(filters.PaymentComment == "xyz")
 async def special_payments_handler(event: QiwiUpdate):
     payment = event.Payment
@@ -32,7 +25,7 @@ async def special_payments_handler(event: QiwiUpdate):
 
 
 async def on_startup():
-    # change hooks if yyo want
+    # change hooks if you want
     # info = await qiwi.new_hooks("http://myNewWebHooksUrl.com", 2)
     info = await qiwi.hooks()
 
@@ -42,6 +35,4 @@ async def on_startup():
     )
 
 
-# I recommend using reverse-proxies
-# like nginx running .py locally for convenience
 qiwi.idle(on_startup=on_startup(), port=5577)
