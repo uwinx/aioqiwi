@@ -25,15 +25,15 @@ Installation
 +------------+--------------------+-----------+
 | Library    | Description        | Optional  |
 +============+====================+===========+
-|  aiohttp   | http server/client |     -     |
+|  aiohttp   | http server/client |    \-     |
 +------------+--------------------+-----------+
-|  pydantic  | schema validation  |     -     |
+|  pydantic  | schema validation  |    \-     |
 +------------+--------------------+-----------+
-|  ujson     | json de/serializer |     +     |
+|  ujson     | json de/serializer |    \+     |
 +------------+--------------------+-----------+
-|  rapidjson | json de/serializer |     +     |
+|  rapidjson | json de/serializer |    \+     |
 +------------+--------------------+-----------+
-|  orjson    | json de/serializer |     +     |
+|  orjson    | json de/serializer |    \+     |
 +------------+--------------------+-----------+
 
 -------------------
