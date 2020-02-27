@@ -1,9 +1,10 @@
-import importlib
 import json
 import logging
+import importlib
+
+from pydantic import ValidationError
 
 from .exceptions import ApiBaseException
-from .models import utils, exceptions
 
 # DEFAULT MOSCOW-TIMEZONE
 MOSCOW_TZD = "03:00"
@@ -15,11 +16,10 @@ serialize = json.dumps
 deserialize = json.loads
 json_module = "json"
 
-# get json (d1)e(n2)coder
 for json_lib in ["orjson", "ujson", "rapidjson"]:
     try:
-        serialize = importlib.import_module(json_lib).dumps
-        deserialize = importlib.import_module(json_lib).loads
+        serialize = importlib.import_module(json_lib).dumps  # type: ignore
+        deserialize = importlib.import_module(json_lib).loads  # type: ignore
         json_module = json_lib
         break
     except ImportError:
@@ -27,7 +27,7 @@ for json_lib in ["orjson", "ujson", "rapidjson"]:
 
 
 class Requests:
-    TZD = MOSCOW_TZD
+    TZD = MOSCOW_TZD  # default qiwi timezone (moscow)
 
     @property
     def _date_fmt(self):
@@ -36,47 +36,33 @@ class Requests:
     as_model = True
 
     async def _make_return(
-        self, resp, *models, spec_ignore=False, force_non_model=False
+        self, resp, model, force_non_model=False, as_list: bool = False
     ):
         """
-        todo: BETTER-ERROR HANDLING
         Convenient way to do return
         :param resp: server-response
-        :param models: api-model
-        :param spec_ignore: ignore keys in response get list-like value and return list of model:`value`
-        :return: models in model | list of models | model
+        :param model: api-model
         """
         data = await resp.read()
+
+        if not data:
+            raise ApiBaseException("Invalid data obtained")
 
         try:
             data = deserialize(data)
         except TypeError as exc:
             logger.error(exc)
-            return data, resp
-
-        ret_func = (
-            utils.ignore_specs_get_list_of_models
-            if spec_ignore
-            else utils.json_to_model
-        )
+            raise ApiBaseException("JSON parsing error")
 
         try:
             if not force_non_model:
-                return ret_func(data, *models) if self.as_model else data
+                if not as_list:
+                    return model(**data) if self.as_model else data
+                else:
+                    return [model(**t) for t in data] if self.as_model else data
             return data
-        except exceptions.ModelConversionError as error:
-            raise ApiBaseException(error.json)
+        except ValidationError as error:
+            raise ApiBaseException(error.json())
 
     def parse_date(self, date):
         return date if isinstance(date, str) else date.strftime(self._date_fmt)
-
-    @property
-    def listeners(self):
-        if hasattr(self, "_handler"):
-            return self._handler.registered_handlers
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()  # noqa

@@ -1,2 +1,2 @@
 from .requests import QiwiMaps
-from .models.polygon import Polygon
+from .types.polygon import Polygon

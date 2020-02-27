@@ -1,2 +1,2 @@
 from .requests import QiwiKassa
-from .models.updates import BillUpdate
+from .types.updates import Notification

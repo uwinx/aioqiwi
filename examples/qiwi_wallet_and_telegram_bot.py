@@ -5,21 +5,23 @@ Before running install aiogram, cool telegram bot-api wrapper
         pip install aiogram
 
 """
-from aiogram import Bot
+import asyncio
 
-from aioqiwi.utils import BeautifulSum
-from aioqiwi.wallet import Wallet, QiwiUpdate, filters
+from aiogram import Bot
+from aioqiwi.wallet import Wallet, WebHook
 
 ME = 124191486  # your telegram user id
 
-qiwi = Wallet("MyQiwiToken")
-bot = Bot("MyBotToken")
+loop = asyncio.get_event_loop()
+
+qiwi = Wallet("MyQiwiToken", loop=loop)
+bot = Bot("MyBotToken", validate_token=False)
 
 
-@qiwi.on_update(filters.PaymentComment == "xyz")
-async def special_payments_handler(event: QiwiUpdate):
-    payment = event.Payment
-    text = f":D Woop-woop! {payment.account} sent you {BeautifulSum(payment.Sum).humanize}\n"
+@qiwi.on_update()
+async def special_payments_handler(event: WebHook):
+    payment = event.payment
+    text = f":D Woop-woop! {payment.account} sent you {payment.sum.amount}\n"
 
     await bot.send_message(chat_id=ME, text=text)
 
@@ -31,8 +33,10 @@ async def on_startup():
 
     await bot.send_message(
         chat_id=ME,
-        text=f"Bot is starting\nQiwi will send hooks to {info.HookParameters.url}",
+        text=f"Bot is starting\nQiwi will send hooks to {info.hook_parameters.url}",
     )
 
 
-qiwi.idle(on_startup=on_startup(), port=5577)
+if __name__ == '__main__':
+    loop.run_until_complete(on_startup())
+    qiwi.idle(port=5577)

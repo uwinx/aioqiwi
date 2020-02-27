@@ -58,7 +58,9 @@ class BaseWebHookView(web.View):
         return web.Response(text="ok", status=200)
 
     def process_update(self, *filters: typing.Callable, update, handler):
-        dispatcher = self.dispatcher  # matters (since we can get error and we don't want filters execute)!
+        dispatcher = (
+            self.dispatcher
+        )  # matters (since we can get error and we don't want filters execute)!
         if all(_filter(update) for _filter in filters):
             dispatcher.loop.create_task(handler(update))
 

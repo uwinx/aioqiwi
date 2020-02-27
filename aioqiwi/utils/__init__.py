@@ -1,1 +1,1 @@
-from .currencies.currency_utils import Currency, BeautifulSum
+from .currencies.currency_utils import Currency

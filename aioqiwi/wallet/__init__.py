@@ -1,2 +1,2 @@
 from .requests import Wallet
-from .models.updates import QiwiUpdate
+from .types.webhook import WebHook

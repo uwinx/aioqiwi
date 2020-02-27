@@ -1,15 +1,13 @@
-import ipaddress
 import typing
 import logging
+import ipaddress
 
 from aiohttp.web import Application
 
-from ..wallet.models import updates
-from ..models import utils
-from ..requests import deserialize
 from ..server import BaseWebHookView
+from ..requests import deserialize
+from ..wallet.types import webhook
 from ..wallet.handler import Handler
-
 
 logger = logging.getLogger("aioqiwi")
 
@@ -56,13 +54,13 @@ def allow_ip(*ips: typing.Union[str, ipaddress.IPv4Network, ipaddress.IPv4Addres
 class QiwiWalletWebView(BaseWebHookView):
     _check_ip = staticmethod(_check_ip)
 
-    async def parse_update(self) -> updates.QiwiUpdate:
+    async def parse_update(self) -> webhook.WebHook:
         """
         Deserialize update and create new update class
         :return: :class:`updated.QiwiUpdate`
         """
         data = await self.request.json()
-        return utils.json_to_model(deserialize(data), updates.QiwiUpdate)
+        return webhook.WebHook(**deserialize(data))
 
     _app_key_check_ip = "_qiwi_wallet_check_ip"
     _app_key_dispatcher = "_qiwi_waller_dispatcher"

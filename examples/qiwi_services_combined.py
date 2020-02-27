@@ -1,28 +1,44 @@
+import asyncio
+
 from aiohttp.web import Application
 
-from aioqiwi.kassa import QiwiKassa, BillUpdate
-from aioqiwi.wallet import Wallet, QiwiUpdate
-from aioqiwi.utils import BeautifulSum
+from aioqiwi.kassa import QiwiKassa, Notification
+from aioqiwi.wallet import Wallet, WebHook, types, enums
+from aioqiwi.utils import Currency
 
 
-qiwi = Wallet("api_hash from qiwi.com/api")
+loop = asyncio.get_event_loop()
+qiwi = Wallet("api_hash from qiwi.com/api", loop=loop)
 kassa = QiwiKassa("secret_key from p2p.qiwi.com")
 
 
 @qiwi.on_update()
-async def payment_handler(payment: QiwiUpdate):
-    print(BeautifulSum(payment.Payment.Sum).pretty)
+async def payment_handler(payment: WebHook):
+    print(payment.payment.sum)
 
 
 @kassa.on_update()
-async def kassa_update(bill: BillUpdate):
-    print(BeautifulSum(bill.Bill.Amount).pretty)
+async def kassa_update(bill: Notification):
+    print(bill.bill.amount)
 
 
 async def caren():
     lifetime = 30  # days
 
-    await qiwi.transaction(14.88, "alex@morti.ttl")
+    await qiwi.transaction(
+        provider_id=enums.Provider.QIWI_WALLET.value,
+        payment_type=types.P2PPayment(
+            id=None,
+            sum=types.payment.Sum(
+                amount=100.44,
+                currency=Currency["RUB"].isoformat,
+            ),
+            fields=types.payment.Fields(
+                account="!!!receiver's_account!!!"
+            ),
+            paymentMethod=enums.PaymentMethodConst()
+        )
+    )
 
     bill = await kassa.new_bill(
         14.88,
@@ -38,15 +54,17 @@ async def caren():
 async def show_my_history_by_the_way(rows: int = 1):
     history = await qiwi.history(rows)
 
-    for o in history.reversed:  # .reverse is reversed(history.data)
-        print(o.type, o.status, BeautifulSum(o.Sum).pretty, sep="|")
+    for o in reversed(history.data):
+        print(o.type, o.status, o.sum, sep="|")
 
 
-async def before_idle():
+async def idle(app_: Application):
     await caren()
     await show_my_history_by_the_way(25)
+    qiwi.idle(app=app_)
 
 
-app = Application()
-kassa.configure_listener(app)
-qiwi.idle(on_startup=before_idle(), app=app)
+if __name__ == '__main__':
+    app = Application()
+    kassa.configure_listener(app)
+    loop.run_until_complete(idle(app))

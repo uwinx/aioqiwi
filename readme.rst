@@ -2,18 +2,9 @@
 🥝 aioqiwi
 ===========
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/python/black
-    :alt: aioqiwi-code-style
-
 .. image:: https://img.shields.io/badge/Python%203.7-blue.svg
     :target: https://www.python.org/
     :alt: Python-version
-
-.. image:: https://api.codacy.com/project/badge/Grade/f3c436d869d04a7095b980f71a78ad51
-    :target: https://www.codacy.com/app/uwinx/aioqiwi?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=uwinx/aioqiwi&amp;utm_campaign=Badge_Grade
-    :alt: codacy-rating
-
 
 **Qiwi payments for humans(for healthy humans)**
 
@@ -30,28 +21,39 @@ Installation
 ---------------
 🔸 Dependencies
 ---------------
-**aioqiwi** uses only ``aiohttp`` and that's enough, but in case you want increase perfomance of serialization and deserialization, you can install ``ujson`` or ``orjson`` or ``rapidjson``
 
++------------+--------------------+-----------+
+| Library    | Description        | Optional  |
++============+====================+===========+
+|  aiohttp   | http server/client |     -     |
++------------+--------------------+-----------+
+|  pydantic  | schema validation  |     -     |
++------------+--------------------+-----------+
+|  ujson     | json de/serializer |     +     |
++------------+--------------------+-----------+
+|  rapidjson | json de/serializer |     +     |
++------------+--------------------+-----------+
+|  orjson    | json de/serializer |     +     |
++------------+--------------------+-----------+
 
 -------------------
 🔹 Dive-in Example
 -------------------
-**aioqiwi** is a convenient tool with one-night solved architecture and its models generated from API-docs
 
 .. code:: python
 
     import asyncio
 
     from aioqiwi import Wallet
-    from aioqiwi.utils import BeautifulSum
 
     async def qiwi():
-        async with Wallet("TOKEN from https://qiwi.com/api") as wallet:
-            wallet.phone_number = '+7878787878'  # phone number is not required by default, but some methods need it
-            balance = await wallet.balance()
-            print("ACCOUNTS:")
-            for acc in balance.Accounts:
-                print(acc.alias, BeautifulSum(acc.Balance).pretty)
+        wallet = Wallet("TOKEN from https://qiwi.com/api")
+        wallet.phone_number = '+7878787878'  # phone number is not required by default, but some methods need it
+        balance = await wallet.balance()
+        await wallet.close()
+        print("ACCOUNTS:")
+        for acc in balance.accounts:
+            print(acc.alias, acc.balance)
 
     asyncio.run(qiwi())
 
@@ -64,23 +66,19 @@ Installation
 
 .. code:: python
 
-    from aioqiwi.wallet import QiwiUpdate, Wallet, filters
-    from aioqiwi.utils import BeautifulSum
+    from aioqiwi.wallet import WebHook, Wallet
 
     wallet = Wallet("...")
-    only_incoming = filters.equal("Payment.type", "IN")
 
-    @wallet.on_update(only_incoming)
-    async def payments_handler(event: QiwiUpdate):
-        print(f"{event.Payment.account} sent you {BeautifulSum(event.Payment).pretty}")
+    @wallet.on_update(lambda event: ...)
+    async def payments_handler(hook: WebHook):
+        print(f"{hook.payment.account} sent you {BeautifulSum(event.Payment).pretty}")
 
-    @wallet.on_update(only_incoming, filters.PaymentComment.match(r"^(special_code|another_special_code)+$"))
-    async def secret_payments_handler(event: QiwiUpdate):
-        print("*tovarish mayor suspiciously*",
-              f"- WHO THE HECK IS `{event.Payment.account}`, HOW DID HE GET OUR CODE?",
-              sep="\n",)
+    @wallet.on_update()
+    async def secret_payments_handler(event: WebHook):
+        await something(event.payment.commission.amount)
 
-    wallet.idle(port=6969)
+    wallet.idle(port=8090)
 
 
 ----------------------
@@ -92,12 +90,12 @@ Installation
 
     import asyncio
     from aioqiwi import Wallet
-    from aioqiwi.utils import BeautifulSum
 
     async def txn():
-        async with Wallet('...') as wallet:
-            payment = await wallet.transaction(14.88, '+7899966669')
-            print(BeautifulSum(payment.Sum).pretty)
+        wallet = Wallet('...')
+        payment = await wallet.transaction(14.88, '+7899966669')
+        print(payment.sum.amount)
+        await wallet.close()
 
     asyncio.run(txn())
 
@@ -114,10 +112,11 @@ Cool qiwi bills!
     from aioqiwi import QiwiKassa
 
     async def kassa():
-        async with QiwiKassa("SECRET KEY from p2p.qiwi.com or kassa.qiwi.com") as kassa:
-            sent_invoice = await kassa.new_bill(14.88, lifetime=44)
-            # setting lifetime to 44 ahead today [default is 10] 45 - is max
-            print("Url to pay:", sent_invoice.pay_url)
+        kassa = QiwiKassa("SECRET KEY from p2p.qiwi.com or kassa.qiwi.com")
+        sent_invoice = await kassa.new_bill(14.88, lifetime=44)
+        # setting lifetime to 44 ahead today [default is 10] 45 - is max
+        print("Url to pay:", sent_invoice.pay_url)
+        await kassa.close()
 
     asyncio.run(kassa())
 
@@ -139,7 +138,7 @@ Cool qiwi bills!
 
     kassa = QiwiKassa('PRIVATE_KEY')
 
-    @kassa.on_update(lambda bill: bill.Bill.Amount.currency == 'RUB')
+    @kassa.on_update(lambda bill: bill.bill.amount.currency == 'RUB')
     async def my_shiny_rubles_handler(bill_update: BillUpdate):
         # do something
         pass
@@ -167,9 +166,11 @@ Cool qiwi bills!
         from aioqiwi import Wallet
 
         async def json_response():
-            async with Wallet('...') as wallet:
-                wallet.as_model = False
-                print(await wallet.balance())
+            wallet = with Wallet('...')
+            wallet.as_model = False
+            print(await wallet.balance())
+            # some json value printed
+            await wallet.close()
 
         asyncio.run(json_response())
 
@@ -180,20 +181,12 @@ Cool qiwi bills!
 
 You can find examples in ``examples/`` directory in github repository. For start examples above should be enough.
 
-----------------
-👥 Contributing
-----------------
-
-It'd great if you issue some design components. Meantime api-designs are awful, I know.
-
 
 ---------------------------
 🔧 TODOs
 ---------------------------
 
-- **Error handling** 🔥 (for now you can handle aioqiwi.models.exceptions.ModelConversionError using ``as_model``)
 - **Tests** 🔥
-- **Documentation**
 
 ------------------------------------------
 👨‍👨‍👦‍👦 Community

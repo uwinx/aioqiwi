@@ -28,7 +28,7 @@ class Urls:
         base = urljoin(BASE, "sinap/api/v2/terms/{}/payments")
         to_qiwi = base.format("99")
         providers = "https://qiwi.com/mobile/detect.action"
-        commission = urljoin(BASE, "sinap/providers/{}/form")
+        commission = urljoin(BASE, "sinap/providers/{}/onlineCommission")
 
     class P2PBillPayments:
         base = "https://api.qiwi.com/partner/bill/v1/bills/"

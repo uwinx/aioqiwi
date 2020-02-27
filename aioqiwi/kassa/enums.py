@@ -1,13 +1,13 @@
-from ..utils.autoenum import NamedEnum, auto
+from enum import Enum
 
 
-class BillStatuses(NamedEnum):
-    WAITING = auto()
-    PAID = auto()
-    REJECTED = auto()
-    EXPIRED = auto()
+class BillStatuses(Enum):
+    WAITING = "WAITING"
+    PAID = "PAID"
+    REJECTED = "REJECTED"
+    EXPIRED = "EXPIRED"
 
 
-class RefundStatuses(NamedEnum):
-    PARTIAL = auto()
-    FULL = auto()
+class RefundStatuses(Enum):
+    PARTIAL = "PARTIAL"
+    FULL = "FULL"

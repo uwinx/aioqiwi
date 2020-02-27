@@ -1,4 +1,5 @@
 import asyncio
+from functools import wraps
 
 
 class Handler:
@@ -17,10 +18,3 @@ class Handler:
             self.handlers.append((event_handler, filters, kwargs))
 
         return decorator
-
-    @property
-    def registered_handlers(self):
-        return [
-            f'{filters}(where {"".join(f"{k}={v}" for k, v in kfilter.items())})->will execute callback: <{callback.__name__}>'
-            for callback, filters, kfilter in self.handlers
-        ]

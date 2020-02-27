@@ -1,7 +1,7 @@
 from aiohttp import client
 
-from ..utils.currencies.currency_utils import Currency
 from ..requests import serialize
+from ..utils.currencies.currency_utils import Currency
 
 
 def params_filter(dictionary: dict):

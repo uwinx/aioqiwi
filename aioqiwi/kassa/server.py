@@ -1,15 +1,13 @@
-import ipaddress
 import typing
 import logging
+import ipaddress
 
 from aiohttp import web
 
+from .types import updates
 from .crypto import hmac_key
-from .models import updates
-
-from ..requests import deserialize
 from ..server import BaseWebHookView
-from ..models import utils
+from ..requests import deserialize
 
 logger = logging.getLogger("aioqiwi")
 
@@ -57,22 +55,22 @@ class QiwiBillServerWebView(BaseWebHookView):
         if (
             hmac_key(
                 secret,
-                update.Bill.Amount,
-                update.Bill.Status,
-                update.Bill.bill_id,
-                update.Bill.site_id,
+                update.bill.Amount,
+                update.bill.Status,
+                update.bill.bill_id,
+                update.bill.site_id,
             )
             != sha256
         ):
             raise web.HTTPBadRequest()
 
-    async def parse_update(self) -> updates.BillUpdate:
+    async def parse_update(self) -> updates.Notification:
         """
         Deserialize update and create new update class
         :return: :class:`updated.QiwiUpdate`
         """
         data = await self.request.json()
-        return utils.json_to_model(deserialize(data), updates.BillUpdate)
+        return updates.Notification(**deserialize(data))
 
     async def post(self):
         """

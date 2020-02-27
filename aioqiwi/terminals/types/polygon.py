@@ -13,3 +13,6 @@ class Polygon:
     @property
     def dict(self):
         return {k: str(double) for k, double in self._dict.items()}
+
+
+__all__ = ("Polygon",)

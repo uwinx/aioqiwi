@@ -1,26 +1,26 @@
-from ..utils.autoenum import NamedEnum, auto
+from aioqiwi.types import NamedEnum, name
+
+from .types.payment import PaymentMethod as _PaymentMethod
+
+
+class PaymentMethodConst(_PaymentMethod):
+    type = "Account"
+    accountId = "643"
 
 
 class PaymentTypes(NamedEnum):
-    IN = auto()
-    OUT = auto()
-    QIWI_CARD = auto()
-    ALL = auto()
+    IN = name()
+    OUT = name()
+    QIWI_CARD = name()
+    ALL = name()
 
 
 class PaymentSources(NamedEnum):
-    """Источники платежа, для отбора. Каждый источник задается как отдельный параметр и нумеруется элементом массива, начиная с нуля (sources[0], sources[1] и т.д.). Допустимые значения:
-    QW_RUB - рублевый счет кошелька,
-    QW_USD - счет кошелька в долларах,
-    QW_EUR - счет кошелька в евро,
-    CARD - привязанные и непривязанные к кошельку банковские карты,
-    MK - счет мобильного оператора. Если не указаны, учитываются все источники"""
-
-    QW_RUB = auto()
-    QW_USD = auto()
-    QW_EUR = auto()
-    CARD = auto()
-    MK = auto()
+    QW_RUB = name()
+    QW_USD = name()
+    QW_EUR = name()
+    CARD = name()
+    MK = name()
 
 
 class Provider(NamedEnum):
@@ -66,5 +66,5 @@ class ChequeTypes(NamedEnum):
     Check [Cheque]'s output type
     """
 
-    JPEG = auto()
-    PDF = auto()
+    JPEG = name()
+    PDF = name()

@@ -3,55 +3,6 @@ from typing import Tuple
 from . import currencies_parsed as cur
 
 
-class BeautifulSum:
-    def __init__(self, payment_sum):
-        """
-        :param payment_sum: object `sum` from history or qiwi-update objects
-
-        .. code-block:: python3
-        >>> import asyncio
-        >>> from aioqiwi import Wallet
-        >>>
-        >>> async def foo():
-        ...     async with Wallet('my_hash', '') as client:
-        ...         print(BeautifulSum((await client.history(20)).data[-1]).humanize)
-        ...
-        >>> asyncio.run(foo())
-        """
-        if hasattr(payment_sum, "value"):
-            self.amount = payment_sum.value
-        else:
-            self.amount = payment_sum.amount
-        self.currency = payment_sum.currency
-
-    @property
-    def human_currency(self) -> cur.Currency:
-        """
-        Get beautiful payment.sum.currency info, returns russian rubles by default
-        :return: Gets currency by ISO-4217 code sent by qiwi, russian rubles by default
-        """
-        return Currency[self.currency]
-
-    @property
-    def human_amount(self):
-        """
-        Get beautiful formatted payment.sum.amount
-        :return:
-        """
-        return f"{self.amount:,}"
-
-    @property
-    def humanize(self):
-        return f"{self.human_amount} {self.human_currency.name}"
-
-    @property
-    def pretty(self):
-        return f"{self.human_amount:<12} {self.human_currency.symbol_native}"
-
-    def __repr__(self):
-        return self.pretty
-
-
 class Currency:
     """
     Easy to use class to get info abuot currency

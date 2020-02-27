@@ -33,8 +33,7 @@ setup(
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3.7",
     ],
-    install_requires=["aiohttp==3.6.2>4.0"],
-    package_data={"": ["requirements.txt"]},
+    install_requires=["aiohttp>=3.6.2,<4.0", 'pydantic>=1.4,<2.0'],
     include_package_data=False,
-    keywords="qiwi.com api-wrapper api qiwi-api asyncio aiohttp server webhooks",
+    keywords="qiwi.com api-wrapper qiwi-api aiohttp server webhooks",
 )

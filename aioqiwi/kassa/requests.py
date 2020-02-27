@@ -1,20 +1,20 @@
-import asyncio
-import base64
-import datetime
-import logging
-import typing
 import uuid
+import base64
+import typing
+import asyncio
+import logging
+import datetime
 
 from aiohttp import web
 
-from .handler import Handler
-from .models import sent_invoice, refund
-from .server import setup
-from ..requests import Requests, serialize
 from ..urls import Urls
-from ..utils.currencies.currency_utils import Currency
+from .types import refund, invoice
+from .server import setup
+from .handler import Handler
+from ..requests import Requests, serialize
 from ..utils.phone import parse_phone
-from ..utils.requests import new_http_session, get_currency
+from ..utils.requests import get_currency, new_http_session
+from ..utils.currencies.currency_utils import Currency
 
 logger = logging.getLogger("aioqiwi")
 loop = asyncio.get_event_loop()  # noqa
@@ -40,8 +40,8 @@ class QiwiKassa(Requests):
         self.loop = loop
         self._handler = Handler(self.loop)
 
-    @staticmethod
-    def generate_bill_id():
+    @classmethod
+    def generate_bill_id(cls):
         """
         Generates unique bill_id
         However you can implement your generator :idk:
@@ -61,10 +61,10 @@ class QiwiKassa(Requests):
         lifetime: typing.Union[int, datetime.datetime] = 10,
         *,
         currency: typing.Union[str, int, Currency] = Currency["643"],
-        comment: str = "aioqiwi-check",
+        comment: str = "aioqiwi-cheque",
         bill_id: str = None,
         custom_fields: dict = None
-    ) -> sent_invoice.Invoice:
+    ) -> invoice.Invoice:
         """
         Create new bill
         :param amount: invoice amount rounded down to two decimals
@@ -75,7 +75,7 @@ class QiwiKassa(Requests):
         :param comment: invoice commentary
         :param bill_id: unique invoice identifier in merchant's system
         :param custom_fields
-        :return: SentInvoice if success
+        :return: Invoice if success
         """
         url = Urls.P2PBillPayments.bill.format(bill_id or self.generate_bill_id())
 
@@ -95,9 +95,9 @@ class QiwiKassa(Requests):
         )
 
         async with self._put(data=data, url=url) as response:
-            return await self._make_return(response, sent_invoice.Invoice)
+            return await self._make_return(response, invoice.Invoice)
 
-    async def bill_info(self, bill_id: str) -> sent_invoice.Invoice:
+    async def bill_info(self, bill_id: str) -> invoice.Invoice:
         """
         Get info about bill
         :param bill_id: bill's id in your system
@@ -106,7 +106,7 @@ class QiwiKassa(Requests):
         url = Urls.P2PBillPayments.bill.format(bill_id)
 
         async with self._get(url) as response:
-            return await self._make_return(response, sent_invoice.Invoice)
+            return await self._make_return(response, invoice.Invoice)
 
     async def reject_bill(self, bill_id: str):
         """
@@ -117,7 +117,7 @@ class QiwiKassa(Requests):
         url = Urls.P2PBillPayments.reject.format(bill_id)
 
         async with self._post(url) as response:
-            return await self._make_return(response, sent_invoice.Invoice)
+            return await self._make_return(response, invoice.Invoice)
 
     async def refund(
         self,
@@ -147,7 +147,7 @@ class QiwiKassa(Requests):
         async with self._put(url, data=data) as response:
             return await self._make_return(response, refund.Refund)
 
-    def on_update(self) -> Handler.update:
+    def on_update(self) -> typing.Callable[..., typing.Type[None]]:
         """
         Return function, use it as a decorator
         :return:
@@ -157,8 +157,8 @@ class QiwiKassa(Requests):
     def configure_listener(self, app, path=None):
         """
         Pass aiohttp.web.Application and aioqiwi.kassa.server will bind itself to your app
-        :param app:
-        :param path: your endpoint, see default in aioqiwi.kassa.server.py:L~:start:
+        :param app: existing aiohttp application
+        :param path: your endpoint, see default in aioqiwi.kassa.server.py
         :return:
         """
         setup(self.__api_hash, self._handler, app, path=path)
