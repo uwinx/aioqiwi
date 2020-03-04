@@ -1,11 +1,13 @@
 """
 Main model: Payment
 """
-from typing import Union, Optional
+from typing import Generic, Optional, TypeVar, Union
 
 from pydantic import Field
 
 from aioqiwi.types import BaseModel
+
+P = TypeVar("P")
 
 
 class State(BaseModel):
@@ -87,15 +89,21 @@ class CellTopUp(P2PPayment):
     """Object: CellTopUp"""
 
 
-class CardPayment(CellTopUp):
+class CardPayment(BaseModel):
     """Object: CardPayment"""
 
+    id: Optional[str] = Field(type(None), alias="id")
+    sum: Sum = Field(..., alias="sum")
+    payment_method: PaymentMethod = Field(..., alias="paymentMethod")
     payment_fields: CardFields = Field(..., alias="fields")
 
 
-class BankPayment(CellTopUp):
+class BankPayment(BaseModel):
     """Object: BankPayment"""
 
+    id: Optional[str] = Field(type(None), alias="id")
+    sum: Sum = Field(..., alias="sum")
+    payment_method: PaymentMethod = Field(..., alias="paymentMethod")
     payment_fields: BankFields = Field(..., alias="fields")
 
 

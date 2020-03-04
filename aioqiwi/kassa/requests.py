@@ -1,44 +1,57 @@
-import uuid
-import base64
-import typing
 import asyncio
-import logging
+import base64
 import datetime
+import logging
+import uuid
+from typing import Any, Dict, Optional, Union
 
 from aiohttp import web
 
+from ..core import currencies, handler
+from ..core import phone as phone_module
+from ..core import requests
 from ..urls import Urls
-from .types import refund, invoice
 from .server import setup
-from .handler import Handler
-from ..requests import Requests, serialize
-from ..utils.phone import parse_phone
-from ..utils.requests import get_currency, new_http_session
-from ..utils.currencies.currency_utils import Currency
+from .types import invoice, refund
 
 logger = logging.getLogger("aioqiwi")
-loop = asyncio.get_event_loop()  # noqa
 
 
-class QiwiKassa(Requests):
-    def __init__(self, api_hash: str):
+class QiwiKassa(requests.Requests):
+    def __init__(
+        self,
+        api_hash: str,
+        timeout: Optional[Union[float, int]] = None,
+        loop: asyncio.AbstractEventLoop = None,
+        event_process_strategy: handler.EventProcessStrategy = None,
+    ):
         """
         Beta of kassa.qiwi.com currently developing
         :param api_hash: Qiwi unique token given for an account
         """
-        session = new_http_session(api_hash)
-        self._session = session
+        super().__init__(api_hash, timeout, event_loop=loop)
 
         self.__api_hash = api_hash
 
-        self._get = session.get
-        self._post = session.post
-        self._put = session.put
-        self._delete = session.delete
-        self._patch = session.patch
+        self.handler_manager = handler.HandlerManager(self.loop, event_process_strategy)
 
-        self.loop = loop
-        self._handler = Handler(self.loop)
+    @classmethod
+    def _get_currency_code(
+        cls, currency: Optional[Union[str, int, currencies.CurrencyModel]] = None
+    ) -> str:
+        if isinstance(currency, (str, int)):
+            temp = currencies.Currency.get(currency)
+            if temp is None:
+                raise ValueError(f"Could not find loaded Currency for {currency!s}")
+            return temp.code
+        elif isinstance(currency, currencies.CurrencyModel):
+            return currency.code
+        else:
+            raise TypeError(
+                f"Invalid type got for currency code,"
+                f"expected {(str, int, currencies.CurrencyModel)!r},"
+                f" got {currency!r}"
+            )
 
     @classmethod
     def generate_bill_id(cls):
@@ -56,22 +69,22 @@ class QiwiKassa(Requests):
     async def new_bill(
         self,
         amount: float,
-        peer: typing.Union[str, int] = None,
-        peer_email: str = None,
-        lifetime: typing.Union[int, datetime.datetime] = 10,
+        peer_phone: Optional[Union[str, int]] = None,
+        peer_email: Optional[str] = None,
+        lifetime: Union[int, datetime.datetime] = 10,
         *,
-        currency: typing.Union[str, int, Currency] = Currency["643"],
-        comment: str = "aioqiwi-cheque",
-        bill_id: str = None,
-        custom_fields: dict = None
+        currency: Union[str, int, currencies.CurrencyModel] = "643",
+        comment: str = "q> aioqiwi <p",
+        bill_id: Optional[str] = None,
+        custom_fields: Optional[Dict[str, Any]] = None,
     ) -> invoice.Invoice:
         """
         Create new bill
         :param amount: invoice amount rounded down to two decimals
-        :param peer: phone number to which invoice issued
+        :param peer_phone: phone number to which invoice issued
         :param peer_email: client's e-mail
         :param lifetime: invoice due date pass int for `days` representation
-        :param currency: pass Currency object or integer code like <845> of currency or str code like <'USD'>
+        :param currency: pass currencies.Currency object or integer code like <845> of currency or str code like <'USD'>
         :param comment: invoice commentary
         :param bill_id: unique invoice identifier in merchant's system
         :param custom_fields
@@ -82,20 +95,28 @@ class QiwiKassa(Requests):
         if isinstance(lifetime, int):
             lifetime = datetime.datetime.now() + datetime.timedelta(days=lifetime)
 
-        data = serialize(
+        data = self.json_module.serialize(
             {
-                "amount": {"currency": get_currency(currency).code, "value": amount},
+                "amount": {
+                    "currency": self._get_currency_code(currency),
+                    "value": amount,
+                },
                 "comment": comment,
-                "expirationDateTime": self.parse_date(lifetime),
-                "customer": {"phone": parse_phone(peer), "account": peer_email}
-                if peer and peer_email
+                "expirationDateTime": self.datetime_module.check_and_parse_datetime(
+                    lifetime
+                ),
+                "customer": {
+                    "phone": phone_module.parse_phone(peer_phone),
+                    "account": peer_email,
+                }
+                if peer_phone and peer_email
                 else {},
                 "customFields": custom_fields or {},
             }
         )
 
-        async with self._put(data=data, url=url) as response:
-            return await self._make_return(response, invoice.Invoice)
+        async with self._session.put(data=data, url=url) as response:
+            return await self.make_return(response, invoice.Invoice)
 
     async def bill_info(self, bill_id: str) -> invoice.Invoice:
         """
@@ -105,8 +126,8 @@ class QiwiKassa(Requests):
         """
         url = Urls.P2PBillPayments.bill.format(bill_id)
 
-        async with self._get(url) as response:
-            return await self._make_return(response, invoice.Invoice)
+        async with self._session.get(url) as response:
+            return await self.make_return(response, invoice.Invoice)
 
     async def reject_bill(self, bill_id: str):
         """
@@ -116,15 +137,15 @@ class QiwiKassa(Requests):
         """
         url = Urls.P2PBillPayments.reject.format(bill_id)
 
-        async with self._post(url) as response:
-            return await self._make_return(response, invoice.Invoice)
+        async with self._session.post(url) as response:
+            return await self.make_return(response, invoice.Invoice)
 
     async def refund(
         self,
         bill_id: str,
         refund_id: str,
-        amount: float = None,
-        currency: typing.Union[str, int] = None,
+        amount: Optional[float] = None,
+        currency: Optional[Union[str, int]] = None,
     ) -> refund.Refund:
         """
         Refund user's money, pass amount and currency to refund, else will get info about refund
@@ -137,22 +158,15 @@ class QiwiKassa(Requests):
         url = Urls.P2PBillPayments.refund.format(bill_id, refund_id)
 
         if not amount and not currency:
-            async with self._get(url) as response:
-                return await self._make_return(response, refund.Refund)
+            async with self._session.get(url) as response:
+                return await self.make_return(response, refund.Refund)
 
-        data = serialize(
-            {"amount": {"currency": get_currency(currency).code, "value": amount}}
+        data = self.json_module.serialize(
+            {"amount": {"currency": self._get_currency_code(currency), "value": amount}}
         )
 
-        async with self._put(url, data=data) as response:
-            return await self._make_return(response, refund.Refund)
-
-    def on_update(self) -> typing.Callable[..., typing.Type[None]]:
-        """
-        Return function, use it as a decorator
-        :return:
-        """
-        return self._handler.update
+        async with self._session.put(url, data=data) as response:
+            return await self.make_return(response, refund.Refund)
 
     def configure_listener(self, app, path=None):
         """
@@ -161,7 +175,7 @@ class QiwiKassa(Requests):
         :param path: your endpoint, see default in aioqiwi.kassa.server.py
         :return:
         """
-        setup(self.__api_hash, self._handler, app, path=path)
+        setup(self.__api_hash, self.handler_manager, app, path=path)
 
     def idle(self, host="localhost", port=7494, path=None, app=None):
         """
@@ -169,12 +183,7 @@ class QiwiKassa(Requests):
         :param host: server host
         :param port: server port that open for tcp/ip trans.
         :param path: path for qiwi that will send requests
-        :param app: pass web.Application if you want, common-use - aiogram powered webhook-bots
-        :return:
+        :param app: pass aiohttp web application
         """
-        setup(self._handler, app or web.Application(), path)
+        setup(self.__api_hash, self.handler_manager, app or web.Application(), path)
         web.run_app(app, host=host, port=port)
-
-    # session-related
-    async def close(self):
-        await self._session.close()

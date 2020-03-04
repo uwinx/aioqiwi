@@ -1,3 +1,5 @@
+from typing import Optional
+
 from aioqiwi.types import BaseModel
 
 
@@ -29,7 +31,7 @@ class Identification(BaseModel):
     snils: str
     """Номер СНИЛС пользователя"""
 
-    type: str = None
+    type: Optional[str] = None
     """
     Текущий уровень идентификации кошелька:
     SIMPLE - без идентификации.

@@ -18,7 +18,7 @@ qiwi = Wallet("MyQiwiToken", loop=loop)
 bot = Bot("MyBotToken", validate_token=False)
 
 
-@qiwi.on_update()
+@qiwi.hm()
 async def special_payments_handler(event: WebHook):
     payment = event.payment
     text = f":D Woop-woop! {payment.account} sent you {payment.sum.amount}\n"

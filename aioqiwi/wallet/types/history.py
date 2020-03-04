@@ -1,13 +1,11 @@
 """
 Main model: History
 """
-from typing import List, Union
+from typing import List, Optional, Union
 
 from pydantic import Field
 
 from aioqiwi.types import BaseModel
-
-NoneType = type(None)
 
 
 class Provider(BaseModel):
@@ -19,7 +17,7 @@ class Provider(BaseModel):
     logo_url: str = Field(..., alias="logoUrl")
     description: str = Field(..., alias="description")
     keys: str = Field(..., alias="keys")
-    site_url: Union[str, bool, int, NoneType] = Field(NoneType, alias="siteUrl")
+    site_url: Optional[Union[str, bool, int]] = Field(None, alias="siteUrl")
 
 
 class Total(BaseModel):
@@ -43,22 +41,22 @@ class Sum(BaseModel):
     currency: str = Field(..., alias="currency")
 
 
-class Data(BaseModel):
+class PaymentData(BaseModel):
     """Object: data"""
 
     txn_id: int = Field(..., alias="txnId")
     person_id: int = Field(..., alias="personId")
     date: str = Field(..., alias="date")
     error_code: int = Field(..., alias="errorCode")
-    error: Union[str, bool, int, NoneType] = Field(NoneType, alias="error")
+    error: Optional[Union[str, bool, int]] = Field(None, alias="error")
     status: str = Field(..., alias="status")
     type: str = Field(..., alias="type")
     status_text: str = Field(..., alias="statusText")
     trm_txn_id: str = Field(..., alias="trmTxnId")
     account: str = Field(..., alias="account")
-    comment: Union[str, bool, int, NoneType] = Field(NoneType, alias="comment")
+    comment: Optional[Union[str, bool, int]] = Field(None, alias="comment")
     currency_rate: int = Field(..., alias="currencyRate")
-    extras: Union[str, bool, int, NoneType] = Field(NoneType, alias="extras")
+    extras: Optional[Union[str, bool, int]] = Field(None, alias="extras")
     cheque_ready: bool = Field(..., alias="chequeReady")
     bank_document_available: bool = Field(..., alias="bankDocumentAvailable")
     bank_document_ready: bool = Field(..., alias="bankDocumentReady")
@@ -72,6 +70,6 @@ class Data(BaseModel):
 class History(BaseModel):
     """Object: History"""
 
-    data: List[Data] = Field(..., alias="data")
+    data: List[PaymentData] = Field(..., alias="data")
     next_txn_id: int = Field(..., alias="nextTxnId")
     next_txn_date: str = Field(..., alias="nextTxnDate")

@@ -4,7 +4,7 @@ from aiohttp.web import Application
 
 from aioqiwi.kassa import QiwiKassa, Notification
 from aioqiwi.wallet import Wallet, WebHook, types, enums
-from aioqiwi.utils import Currency
+from aioqiwi.core.currencies import Currency
 
 
 loop = asyncio.get_event_loop()
@@ -12,12 +12,12 @@ qiwi = Wallet("api_hash from qiwi.com/api", loop=loop)
 kassa = QiwiKassa("secret_key from p2p.qiwi.com")
 
 
-@qiwi.on_update()
+@qiwi.hm()
 async def payment_handler(payment: WebHook):
     print(payment.payment.sum)
 
 
-@kassa.on_update()
+@kassa.hm()
 async def kassa_update(bill: Notification):
     print(bill.bill.amount)
 
@@ -31,7 +31,7 @@ async def caren():
             id=None,
             sum=types.payment.Sum(
                 amount=100.44,
-                currency=Currency["RUB"].isoformat,
+                currency=Currency.get("RUB").isoformat,
             ),
             fields=types.payment.Fields(
                 account="!!!receiver's_account!!!"

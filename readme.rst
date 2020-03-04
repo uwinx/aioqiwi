@@ -22,19 +22,13 @@ Installation
 🔸 Dependencies
 ---------------
 
-+------------+--------------------+-----------+
-| Library    | Description        | Optional  |
-+============+====================+===========+
-|  aiohttp   | http server/client |    \-     |
-+------------+--------------------+-----------+
-|  pydantic  | schema validation  |    \-     |
-+------------+--------------------+-----------+
-|  ujson     | json de/serializer |    \+     |
-+------------+--------------------+-----------+
-|  rapidjson | json de/serializer |    \+     |
-+------------+--------------------+-----------+
-|  orjson    | json de/serializer |    \+     |
-+------------+--------------------+-----------+
++------------+--------------------+
+| Library    | Description        |
++============+====================+
+|  aiohttp   | http server/client |
++------------+--------------------+
+|  pydantic  | schema validation  |
++------------+--------------------+
 
 -------------------
 🔹 Dive-in Example
@@ -61,6 +55,7 @@ Installation
 --------------------
 📣 Handling updates
 --------------------
+
 **aioqiwi** provides user-friendly webhooks handler
 
 
@@ -70,15 +65,37 @@ Installation
 
     wallet = Wallet("...")
 
-    @wallet.on_update(lambda event: ...)
+    @wallet.hm(lambda event: ...)
     async def payments_handler(hook: WebHook):
-        print(f"{hook.payment.account} sent you {BeautifulSum(event.Payment).pretty}")
+        print(f"{hook.payment.account} sent you {event.payment}")
 
-    @wallet.on_update()
+    @wallet.hm()
     async def secret_payments_handler(event: WebHook):
         await something(event.payment.commission.amount)
 
     wallet.idle(port=8090)
+
+
+If you don't want to set up server, aioqiwi provides contrib with
+
+
+.. code:: python
+
+
+    from aioqiwi.wallet import Wallet, types
+    from aioqiwi.wallet.contrib import history_polling
+
+    w = Waller(...)
+
+    @w.hm()
+    async def ph(event: types.PaymentData):
+        ...
+
+    history_polling(w, ...)
+
+
+(!) It's different from original webhook type
+
 
 
 ----------------------
@@ -121,7 +138,7 @@ Cool qiwi bills!
     asyncio.run(kassa())
 
 
-`sent_invoice.pay_url` will redirect us to something like:
+``sent_invoice.pay_url`` will redirect us to something like:
 
 .. image:: https://imbt.ga/gO8EzaFItB
 
@@ -134,12 +151,12 @@ Cool qiwi bills!
 .. code:: python
 
 
-    from aioqiwi.kassa import QiwiKassa, BillUpdate
+    from aioqiwi.kassa import QiwiKassa, Notification
 
     kassa = QiwiKassa('PRIVATE_KEY')
 
-    @kassa.on_update(lambda bill: bill.bill.amount.currency == 'RUB')
-    async def my_shiny_rubles_handler(bill_update: BillUpdate):
+    @kassa.hm(lambda bill: bill.bill.amount.currency == 'RUB')
+    async def my_shiny_rubles_handler(bill_update: Notification):
         # do something
         pass
 
@@ -155,24 +172,14 @@ Cool qiwi bills!
 
 
 -----------------------------
-🍼 Non-model returns(json)
+⛏ return policies
 -----------------------------
 
+aioqiwi's server.BaseWebHookView and requests.Requests support "return policy", it means you can get response/update in the form that suits your needs.
+Read more:
 
-.. code:: python
-
-
-        import asyncio
-        from aioqiwi import Wallet
-
-        async def json_response():
-            wallet = with Wallet('...')
-            wallet.as_model = False
-            print(await wallet.balance())
-            # some json value printed
-            await wallet.close()
-
-        asyncio.run(json_response())
+>>> from aioqiwi.core import returns
+>>> help(returns.ReturnType)
 
 
 -------------------
@@ -189,7 +196,7 @@ You can find examples in ``examples/`` directory in github repository. For start
 - **Tests** 🔥
 
 ------------------------------------------
-👨‍👨‍👦‍👦 Community
+🐦 Community
 ------------------------------------------
 
 **My group**

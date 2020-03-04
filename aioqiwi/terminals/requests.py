@@ -1,18 +1,15 @@
 import typing
 
+from ..core import requests, returns
 from ..urls import Urls
-from ..requests import Requests
 from .types.partner import Partner
 from .types.polygon import Polygon
 from .types.terminal import Terminal
-from ..utils.requests import params_filter, new_http_session
 
 
-class QiwiMaps(Requests):
+class QiwiMaps(requests.Requests):
     def __init__(self):
-        self._session = new_http_session("", atype="application/json;charser=UTF-8")
-
-        self._get = self._session.get
+        super().__init__(None, acpt_type="application/json;charser=UTF-8")
 
     async def terminals(
         self,
@@ -25,7 +22,7 @@ class QiwiMaps(Requests):
         card_terminals: bool = None,
         identification_types: int = None,
         terminal_groups: list = None,
-    ) -> typing.List["Terminal"]:
+    ) -> typing.List["Terminal"]:  # type: ignore
         """
         Get map of terminals sent for passed polygon with additional params
         :param polygon: aioqiwi.models.polygon.Polygon model or dict with NW SE <l->l>s dict
@@ -41,7 +38,7 @@ class QiwiMaps(Requests):
         """
         url = Urls.Maps.base
 
-        params = params_filter(
+        params = self.params_filter(
             {
                 **polygon.dict,
                 "zoom": zoom,
@@ -55,8 +52,12 @@ class QiwiMaps(Requests):
             }
         )
 
-        async with self._get(url, params=params) as resp:
-            return await self._make_return(resp, Terminal, as_list=True)
+        async with self._session.get(url, params=params) as resp:
+            return await self.make_return(
+                resp,
+                Terminal,
+                forces_return_type=returns.ReturnType.LIST_OF_MODELS,  # type: ignore
+            )
 
     async def partners(self) -> typing.List[Partner]:
         """
@@ -66,9 +67,9 @@ class QiwiMaps(Requests):
 
         url = Urls.Maps.ttp_groups
 
-        async with self._get(url) as response:
-            return await self._make_return(response, Partner, as_list=True)
-
-    # session-related
-    async def close(self):
-        await self._session.close()
+        async with self._session.get(url) as response:
+            return await self.make_return(
+                response,
+                Partner,
+                forces_return_type=returns.ReturnType.LIST_OF_MODELS,  # type: ignore
+            )

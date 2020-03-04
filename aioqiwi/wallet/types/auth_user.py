@@ -1,7 +1,7 @@
 """
 Main model: AuthUser
 """
-from typing import Any, List, Union
+from typing import Any, List, Optional, Union
 
 from pydantic import Field
 
@@ -13,14 +13,12 @@ class UserInfo(BaseModel):
 
     default_pay_currency: int = Field(..., alias="defaultPayCurrency")
     default_pay_source: int = Field(..., alias="defaultPaySource")
-    email: Union[str, bool, int, type(None)] = Field(type(None), alias="email")
+    email: Optional[Union[str, bool, int]] = Field(None, alias="email")
     first_txn_id: int = Field(..., alias="firstTxnId")
     language: str = Field(..., alias="language")
     operator: str = Field(..., alias="operator")
     phone_hash: str = Field(..., alias="phoneHash")
-    promo_enabled: Union[str, bool, int, type(None)] = Field(
-        type(None), alias="promoEnabled"
-    )
+    promo_enabled: Optional[Union[str, bool, int]] = Field(None, alias="promoEnabled")
 
 
 class IdentificationInfo(BaseModel):

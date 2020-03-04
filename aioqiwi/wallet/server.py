@@ -1,17 +1,13 @@
-import typing
-import logging
 import ipaddress
+import logging
+import typing
 
 from aiohttp.web import Application
 
-from ..server import BaseWebHookView
-from ..requests import deserialize
+from ..core import handler, server
 from ..wallet.types import webhook
-from ..wallet.handler import Handler
 
 logger = logging.getLogger("aioqiwi")
-
-logger.info(f"Deserialization tool: {deserialize.__name__}")
 
 DEFAULT_QIWI_WEBHOOK_PATH = "/webhooks/qiwi/"
 DEFAULT_QIWI_ROUTER_NAME = "QIWI"
@@ -36,39 +32,25 @@ def _check_ip(ip: str) -> bool:
     return address in allowed_ips
 
 
-def allow_ip(*ips: typing.Union[str, ipaddress.IPv4Network, ipaddress.IPv4Address]):
-    """
-    Add new ips to allowed
-    """
-    for ip in ips:
-        if isinstance(ip, ipaddress.IPv4Address):
-            allowed_ips.add(ip)
-        elif isinstance(ip, str):
-            allowed_ips.add(ipaddress.IPv4Address(ip))
-        elif isinstance(ip, ipaddress.IPv4Network):
-            allowed_ips.update(ip.hosts())
-        else:
-            raise ValueError
-
-
-class QiwiWalletWebView(BaseWebHookView):
-    _check_ip = staticmethod(_check_ip)
+class QiwiWalletWebView(server.BaseWebHookView):
+    def _check_ip(self, ip: str):
+        return _check_ip(ip)
 
     async def parse_update(self) -> webhook.WebHook:
         """
         Deserialize update and create new update class
         :return: :class:`updated.QiwiUpdate`
         """
-        data = await self.request.json()
-        return webhook.WebHook(**deserialize(data))
+        data = await self.request.read()
+        return webhook.WebHook(**self.json_module.deserialize(data))
 
-    _app_key_check_ip = "_qiwi_wallet_check_ip"
-    _app_key_dispatcher = "_qiwi_waller_dispatcher"
+    app_key_check_ip = "_qiwi_wallet_check_ip"
+    app_key_handler_manager = "_qiwi_wallet_handler_manager"
 
 
-def setup(dispatcher: Handler, app: Application, path=None):
-    app[QiwiWalletWebView._app_key_check_ip] = _check_ip
-    app[QiwiWalletWebView._app_key_dispatcher] = dispatcher
+def setup(handler_manager: handler.HandlerManager, app: Application, path: str = None):
+    app[QiwiWalletWebView.app_key_check_ip] = _check_ip
+    app[QiwiWalletWebView.app_key_handler_manager] = handler_manager
     path = path or DEFAULT_QIWI_WEBHOOK_PATH
     app.router.add_view(path, QiwiWalletWebView, name=DEFAULT_QIWI_ROUTER_NAME)
     logger.info(f"Added view to endpoint {path}")
