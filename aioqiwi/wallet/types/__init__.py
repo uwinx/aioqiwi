@@ -18,7 +18,7 @@ from .commission import (
     QwCommission,
     WithdrawSum,
 )
-from .history import Data, History
+from .history import History, PaymentData
 from .identification import Identification
 from .offer import Offer
 from .payment import (

@@ -8,8 +8,8 @@ from aioqiwi.core.currencies import Currency
 
 
 loop = asyncio.get_event_loop()
-qiwi = Wallet("api_hash from qiwi.com/api", loop=loop)
-kassa = QiwiKassa("secret_key from p2p.qiwi.com")
+qiwi = Wallet("api_hash from qiwi.com/api", loop=loop)  #
+kassa = QiwiKassa("secret_key from p2p.qiwi.com", loop=loop)  #
 
 
 @qiwi.hm()
@@ -30,7 +30,7 @@ async def caren():
         payment_type=types.P2PPayment(
             id=None,
             sum=types.payment.Sum(
-                amount=100.44,
+                amount=0.44,
                 currency=Currency.get("RUB").isoformat,
             ),
             fields=types.payment.Fields(
@@ -43,7 +43,7 @@ async def caren():
     bill = await kassa.new_bill(
         14.88,
         "7787787787",
-        "kevin@kids.com" "com",
+        "kevin@kids.com",
         lifetime=lifetime,
         comment="Yes. I took your kids! Pay that bill in a month to see them again :P",
     )

@@ -73,8 +73,8 @@ class HandlerManager:
                     filters_list[index] = Filter(filter_)
 
             filters = tuple(filters_list)
-            handler = EventHandler(event_handler, *filters)
-            self._event_handlers.append(handler)
+
+        self._event_handlers.append(EventHandler(event_handler, *filters))
 
         return self
 

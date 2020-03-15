@@ -13,12 +13,12 @@ class UserInfo(BaseModel):
 
     default_pay_currency: int = Field(..., alias="defaultPayCurrency")
     default_pay_source: int = Field(..., alias="defaultPaySource")
-    email: Optional[Union[str, bool, int]] = Field(None, alias="email")
+    email: Optional[Any] = Field(None, alias="email")
     first_txn_id: int = Field(..., alias="firstTxnId")
     language: str = Field(..., alias="language")
     operator: str = Field(..., alias="operator")
     phone_hash: str = Field(..., alias="phoneHash")
-    promo_enabled: Optional[Union[str, bool, int]] = Field(None, alias="promoEnabled")
+    promo_enabled: Optional[Any] = Field(None, alias="promoEnabled")
 
 
 class IdentificationInfo(BaseModel):
@@ -65,9 +65,9 @@ class MobilePinInfo(BaseModel):
 class AuthInfo(BaseModel):
     """Object: authInfo"""
 
-    bound_email: str = Field(..., alias="boundEmail")
-    ip: str = Field(..., alias="ip")
-    last_login_date: str = Field(..., alias="lastLoginDate")
+    bound_email: Optional[str] = Field(None, alias="boundEmail")
+    ip: Optional[str] = Field(None, alias="ip")
+    last_login_date: Optional[str] = Field(None, alias="lastLoginDate")
     person_id: int = Field(..., alias="personId")
     registration_date: str = Field(..., alias="registrationDate")
     mobile_pin_info: MobilePinInfo = Field(..., alias="mobilePinInfo")

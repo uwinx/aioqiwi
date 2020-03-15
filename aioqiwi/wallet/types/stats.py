@@ -18,7 +18,7 @@ class OutgoingTotal(BaseModel):
 class IncomingTotal(BaseModel):
     """Object: incomingTotal"""
 
-    amount: int = Field(..., alias="amount")
+    amount: float = Field(..., alias="amount")
     currency: str = Field(..., alias="currency")
 
 

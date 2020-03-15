@@ -3,8 +3,8 @@ import typing
 
 from aiohttp import web
 
-from ..types import BaseModel
-from . import json, returns
+from . import returns
+from .tooling import json
 
 if typing.TYPE_CHECKING:
     from .handler import HandlerManager
@@ -68,5 +68,5 @@ class BaseWebHookView(web.View):
         return web.Response(text="ok", status=200)
 
     @property
-    def handler_manager(self) -> 'HandlerManager':
+    def handler_manager(self) -> "HandlerManager":
         return self.request.app.get(self.app_key_handler_manager)  # type: ignore

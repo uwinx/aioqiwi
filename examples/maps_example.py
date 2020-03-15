@@ -1,5 +1,9 @@
-# install geopy
+"""
+Before running install geopy - library for dealing with geolocation etc
+    ::
 
+        pip install geopy
+"""
 import asyncio
 
 from aioqiwi.terminals import Polygon, QiwiMaps

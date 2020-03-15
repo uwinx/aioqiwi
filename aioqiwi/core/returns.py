@@ -3,7 +3,8 @@ from enum import Enum, auto
 
 class ReturnType(Enum):
     """
-    4 Return policies.
+    5 Return policies.
+    NOTHING - returns nothing, :note: returning nothing does not mean doing nothing, validation is done anyway
 
     READ_DATA - raw return once stream is read
 
@@ -14,6 +15,7 @@ class ReturnType(Enum):
     LIST_OF_MODELS - complex return once json deserialized as an iterable list with new instantiated models
                                                                                             of json objects
     """
+    NOTHING = auto()
 
     READ_DATA = auto()
     """raw return once stream is read"""

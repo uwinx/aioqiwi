@@ -1,11 +1,16 @@
+"""
+aioqiwi.wallet enums, constants and constraints
+"""
+
 from aioqiwi.types import NamedEnum, name
 
 from .types.payment import PaymentMethod as _PaymentMethod
 
 
-class PaymentMethodConst(_PaymentMethod):
-    type = "Account"
-    accountId = "643"
+PaymentMethodConst = _PaymentMethod(
+    type="Account",
+    accountId="643"
+)
 
 
 class PaymentTypes(NamedEnum):
@@ -23,7 +28,7 @@ class PaymentSources(NamedEnum):
     MK = name()
 
 
-class Provider(NamedEnum):
+class Provider:
     """
     99 - Перевод на QIWI Wallet
 

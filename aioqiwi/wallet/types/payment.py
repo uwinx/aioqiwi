@@ -79,9 +79,10 @@ class BankFields(BaseModel):
 class P2PPayment(BaseModel):
     """Object: P2PPayment"""
 
-    id: Optional[str] = Field(type(None), alias="id")
+    id: Optional[str] = Field(None, alias="id")
     sum: Sum = Field(..., alias="sum")
     payment_method: PaymentMethod = Field(..., alias="paymentMethod")
+    comment: Optional[str] = Field(None, alias="comment")
     payment_fields: Fields = Field(..., alias="fields")
 
 
@@ -95,6 +96,7 @@ class CardPayment(BaseModel):
     id: Optional[str] = Field(type(None), alias="id")
     sum: Sum = Field(..., alias="sum")
     payment_method: PaymentMethod = Field(..., alias="paymentMethod")
+    comment: Optional[str] = Field(None, alias="comment")
     payment_fields: CardFields = Field(..., alias="fields")
 
 
@@ -104,6 +106,7 @@ class BankPayment(BaseModel):
     id: Optional[str] = Field(type(None), alias="id")
     sum: Sum = Field(..., alias="sum")
     payment_method: PaymentMethod = Field(..., alias="paymentMethod")
+    comment: Optional[str] = Field(None, alias="comment")
     payment_fields: BankFields = Field(..., alias="fields")
 
 
@@ -112,6 +115,6 @@ class Payment(BaseModel):
 
     id: str = Field(..., alias="id")
     source: str = Field(..., alias="source")
-    payment_fields: Union[Fields, CardFields] = Field(..., alias="fields")
+    payment_fields: Union[Fields, CardFields, BankFields] = Field(..., alias="fields")
     sum: Sum = Field(..., alias="sum")
     transaction: Transaction = Field(..., alias="transaction")

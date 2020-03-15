@@ -11,8 +11,12 @@ class DatetimeModule:
 
     @property
     def datetime_fmt(self):
-        """Get datetime format string"""
+        """Get datetime format string with qiwi TZD"""
         return self.DATETIME_FMT.format(self.TZD)
+
+    def parse_date_string(self, dt: str) -> datetime.datetime:
+        """Get datetime with qiwi TZD format from string"""
+        return datetime.datetime.strptime(dt, self.datetime_fmt)
 
     def parse_datetime(self, dt: datetime.datetime):
         return dt.strftime(self.datetime_fmt)

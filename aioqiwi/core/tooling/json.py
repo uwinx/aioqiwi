@@ -1,4 +1,9 @@
+from typing import Optional, Callable, Dict, Any, AnyStr, Union, List
+from types import ModuleType
+
 import importlib
+
+JSON = Optional[Union[Dict[str, Any], List[Any]]]
 
 
 class JsonModule:
@@ -10,6 +15,10 @@ class JsonModule:
     >>> j = JsonModule("json")
     >>> j.deserialize(b"{'a': 'b'}"); j.serialize({'a': 'b'})
     """
+    imported: ModuleType
+
+    deserialize: Callable[[AnyStr], JSON]
+    serialize: Callable[[JSON], AnyStr]
 
     def __init__(self, module: str = "json"):
         """
@@ -17,8 +26,9 @@ class JsonModule:
                        (for json! deserialization and serialization) in namespace.
         """
         try:
-            self.serialize = importlib.import_module(module).dumps  # type: ignore
-            self.deserialize = importlib.import_module(module).loads  # type: ignore
+            self.imported = imported = importlib.import_module(module)
+            self.serialize = imported.dumps  # type: ignore
+            self.deserialize = imported.loads  # type: ignore
         except ImportError:
             raise ImportError(f"{module!s} is not a module or was not yet installed.")
         except AttributeError:

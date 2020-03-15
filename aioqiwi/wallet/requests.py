@@ -1,15 +1,13 @@
+from __future__ import annotations
+
 import datetime
 import logging
 import time
 import warnings
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union, Type
 
-from aiohttp import web
-
-from ..core import currencies, handler
-from ..core import phone as phone_module
-from ..core import requests, returns
-from ..urls import Urls
+from ..core import currencies, handler, requests, returns
+from ..core.tooling import phone as phone_module
 from ..wallet import enums, server
 from ..wallet.types import (
     auth_user,
@@ -24,6 +22,12 @@ from ..wallet.types import (
     webhook,
 )
 
+from .urls import urls
+from .errors import ErrorInfo
+
+if TYPE_CHECKING:
+    from aiohttp import web
+
 try:
     import aiofiles
 except ImportError:
@@ -36,6 +40,7 @@ class Wallet(requests.Requests):
     """
     Qiwi wallet api methods including webhooks
     """
+    _error_model: Type[ErrorInfo] = ErrorInfo
 
     def __init__(
         self,
@@ -111,9 +116,9 @@ class Wallet(requests.Requests):
         :param auth_info_enabled:
         :return:
         """
-        url = Urls.me
+        url = urls.me
 
-        params = self.params_filter(
+        params = self._filter_dict(
             {
                 "authInfoEnabled": auth_info_enabled,
                 "contractInfoEnabled": contract_info_enabled,
@@ -121,10 +126,10 @@ class Wallet(requests.Requests):
             }
         )
 
-        async with self._session.get(url, params=params) as response:
-            return await self.make_return(
-                response=response, current_model=auth_user.AuthUser
-            )
+        response = await self._tools.connector.request("GET", url, params=params)
+        return await self._make_return(
+            response=response, current_model=auth_user.AuthUser
+        )
 
     # end region
 
@@ -140,16 +145,16 @@ class Wallet(requests.Requests):
         if not self.phone_number:
             self._raise_for_phone()
 
-        url = Urls.identification.format(self.phone_number)
+        url = urls.identification.format(self.phone_number)
 
         if not identification_class:
-            async with self._session.get(url) as response:
-                return await self.make_return(response, identification.Identification)
+            response = await self._tools.connector.request("GET", url)
+            return await self._make_return(response, identification.Identification)
 
-        async with self._session.post(
-            url, json=identification_class.json()
-        ) as response:
-            return await self.make_return(response, identification.Identification)
+        response = await self._tools.connector.request(
+            "POST", url, json=identification_class.json()
+        )
+        return await self._make_return(response, identification.Identification)
 
     # end region
 
@@ -160,60 +165,70 @@ class Wallet(requests.Requests):
         *,
         operation: enums.PaymentTypes = enums.PaymentTypes.ALL,
         sources: Optional[List[enums.PaymentSources]] = None,
-        from_date: Optional[Union[str, datetime.datetime]] = None,
-        to_date: Optional[Union[str, datetime.datetime]] = None,
-        offset_date: Optional[Union[str, datetime.datetime]] = None,
-        offset_id: Optional[int] = None,
+        date_range: Optional[
+            Tuple[Union[str, datetime.datetime], Union[str, datetime.datetime]]
+        ] = None,
+        next_txn: Optional[Tuple[Union[str, datetime.datetime], Optional[int]]] = None,
     ) -> history.History:
         """
         Get payments history from new to old
+        :param next_txn: tuple of [offset for previous date, offset id]
+        :param date_range: tuple of [from date strftime with timezone
+                           (formatted datetime `YYYY-MM-DDThh:mm:ssTZ`) till date]
         :param rows: Quantity of operations
         :param operation: one from <IN, ALL, OUT> see aioqiwi.wallet.enums.enums.PaymentTypes
         :param sources: payment source see aioqiwi.wallet.enums:PaymentSources
-        :param from_date: from date strftime with timezone (formatted datetime `YYYY-MM-DDThh:mm:ssTZ`)
-        :param to_date: till date
-        :param offset_date: offset for previous date [use only with offset_id]
-        :param offset_id: offset id for ... [use only with offset_date]
         :return: history.History object
         """
 
         if not self.phone_number:
             self._raise_for_phone()
 
-        url = Urls.history.format(self.phone_number)
+        url = urls.history.format(self.phone_number)
         operation = enums.PaymentTypes(operation).value
 
-        params = self.params_filter(
+        offset_date: Optional[str] = None
+        offset_id: Optional[int] = None
+
+        if next_txn:
+            offset_date = self._tools.datetime_module.check_and_parse_datetime(next_txn[0])
+            offset_id = next_txn[1]
+
+        start_date: Optional[str] = None
+        end_date: Optional[str] = None
+
+        if date_range:
+            start_date = self._tools.datetime_module.check_and_parse_datetime(date_range[0])
+            end_date = self._tools.datetime_module.check_and_parse_datetime(date_range[1])
+
+        params = self._filter_dict(
             {
                 "rows": rows,
                 "operation": operation,
                 "sources": sources,
-                "startDate": self.datetime_module.check_and_parse_datetime(from_date),
-                "endDate": self.datetime_module.check_and_parse_datetime(to_date),
-                "nextTxnDate": self.datetime_module.check_and_parse_datetime(
-                    offset_date
-                ),
+                "startDate": start_date,
+                "endDate": end_date,
+                "nextTxnDate": offset_date,
                 "nextTxnId": offset_id,
             }
         )
 
-        async with self._session.get(url, params=params) as response:
-            return await self.make_return(response, history.History)
+        response = await self._tools.connector.request("GET", url, params=params)
+        return await self._make_return(response, history.History)
 
     async def stats(
         self,
-        *,
-        from_date: Union[str, datetime.datetime] = datetime.datetime.now()
-        - datetime.timedelta(days=89),
-        to_date: Union[str, datetime.datetime] = datetime.datetime.now(),
+        date_range: Tuple[
+            Union[str, datetime.datetime],
+            Union[str, datetime.datetime]
+        ],
         operation: enums.PaymentTypes = enums.PaymentTypes.ALL,
         sources: Optional[enums.PaymentSources] = None,
     ) -> stats.Stats:
         """
         Get statistics of payments
-        :param from_date: from date strftime with timezone, pass EasyDate object for convenience or
-                str-formatted datetime `YYYY-MM-DDThh:mm:ssZ` - from docs
-        :param to_date: like from_date but to
+        :param date_range: tuple of [from date strftime with timezone
+                           (formatted datetime `YYYY-MM-DDThh:mm:ssTZ`) till date]
         :param operation: one from <IN, ALL, OUT> see aioqiwi.wallet.enums.enums.PaymentTypes
         :param sources: payment source see aioqiwi.wallet.enums:PaymentSources
         :return: stats object with incoming_total, outgoing_total
@@ -221,26 +236,29 @@ class Wallet(requests.Requests):
         if not self.phone_number:
             self._raise_for_phone()
 
-        url = Urls.stats.format(self.phone_number)
+        url = urls.stats.format(self.phone_number)
+        operation_val = enums.PaymentTypes(operation).value
+        start_date = self._tools.datetime_module.check_and_parse_datetime(date_range[0])
+        end_date = self._tools.datetime_module.check_and_parse_datetime(date_range[1])
 
-        params = self.params_filter(
+        params = self._filter_dict(
             {
-                "operation": operation,
+                "operation": operation_val,
                 "sources": sources,
-                "startDate": self.datetime_module.check_and_parse_datetime(from_date),
-                "endDate": self.datetime_module.check_and_parse_datetime(to_date),
+                "startDate": start_date,
+                "endDate": end_date,
             }
         )
 
-        async with self._session.get(url, params=params) as response:
-            return await self.make_return(response, stats.Stats)
+        response = await self._tools.connector.request("GET", url, params=params)
+        return await self._make_return(response, stats.Stats)
 
-    async def cheque(
+    async def download_cheque(
         self,
         transaction_id: int,
         transaction_type: str,
-        ftype: str,
-        destination_dir: str = "aioqiwi_tmp/",
+        ftype: Union[str, enums.ChequeTypes],
+        destination_dir: str = "./",
         filename: Optional[str] = None,
     ) -> str:
         """
@@ -251,23 +269,42 @@ class Wallet(requests.Requests):
         :param destination_dir: path to save
         :param filename: filename to save
         """
-        url = Urls.cheque.format(transaction_id)
+        url = urls.cheque.format(transaction_id)
 
+        file_fmt = enums.ChequeTypes(ftype).value
         params = {
-            "type": enums.PaymentTypes(transaction_type.upper()),
-            "format": enums.ChequeTypes(ftype.upper()),
+            "type": enums.PaymentTypes(transaction_type).value,
+            "format": file_fmt,
         }
 
-        async with self._session.get(url, params=params) as response:
-            destination = f"{destination_dir}/{filename or ('aioqiwi_' + str(transaction_id))}'.{ftype.lower()}"
-            binary = await response.read()
-            if aiofiles:
-                async with aiofiles.open(destination, "wb") as fp:
-                    await fp.write(binary)
-            else:
-                with open(destination, "wb") as fp:
-                    fp.write(binary)
-            return destination
+        response = await self._tools.connector.request("GET", url, params=params)
+        await self._make_return(response, None, forces_return_type=returns.ReturnType.NOTHING)
+        destination = f"{destination_dir}/{filename or ('aioqiwi_' + str(transaction_id))}.{file_fmt.lower()}"
+        # files are primarily have `small` size, so no need to read/write chunk
+        binary = await response.read()
+        if aiofiles:
+            async with aiofiles.open(destination, "wb") as fp:
+                await fp.write(binary)
+        else:
+            with open(destination, "wb") as fp:
+                fp.write(binary)
+        return destination
+
+    async def request_cheque(self, transaction_id: int, transaction_type: enums.PaymentTypes, email: str) -> None:
+        transaction_type = enums.PaymentTypes(transaction_type).value
+
+        response = await self._tools.connector.request(
+            "POST",
+            url=urls.request_cheque.format(transaction_id),
+            params=self._filter_dict({"type": transaction_type}),
+            data={"email": email}
+        )
+        await self._make_return(
+            response,
+            None,
+            forces_return_type=returns.ReturnType.NOTHING
+        )
+        return None
 
     # end region
 
@@ -289,28 +326,28 @@ class Wallet(requests.Requests):
         :return: Hooks or None
         """
         server_url = url
-        url = Urls.Hooks.register
+        url = urls.web_hooks.register
 
         if not server_url and not transactions_type:
-            url = Urls.Hooks.test if send_test_notification else Urls.Hooks.active
-            async with self._session.get(url) as response:
-                if not send_test_notification:
-                    return await self.make_return(
-                        response,
-                        webhook.WebHookConfig,
-                        forces_return_type=returns.ReturnType.JSON,
-                    )
-                else:
-                    raise ValueError("Nothing to fetch/post!")
+            url = urls.web_hooks.test if send_test_notification else urls.web_hooks.active
+            response = await self._tools.connector.request("GET", url)
+            if not send_test_notification:
+                return await self._make_return(
+                    response,
+                    webhook.WebHookConfig,
+                    forces_return_type=returns.ReturnType.JSON,
+                )
+            else:
+                raise ValueError("Nothing to fetch/post!")
 
-        params = self.params_filter(
+        params = self._filter_dict(
             {"hookType": 1, "param": server_url, "txnType": transactions_type or 2}
         )
 
-        async with self._session.put(url, params=params) as response:
-            return await self.make_return(
-                response, webhook.WebHook, forces_return_type=returns.ReturnType.JSON
-            )
+        response = await self._tools.connector.request("PUT", url, params=params)
+        return await self._make_return(
+            response, webhook.WebHook, forces_return_type=returns.ReturnType.JSON
+        )
 
     async def delete_hooks(self, hook_id: Optional[str] = None) -> dict:
         """
@@ -322,11 +359,13 @@ class Wallet(requests.Requests):
             hook = await self.hooks()
             hook_id = (
                 hook["hookId"] if isinstance(hook, dict) else hook.hook_id
-            )  # type: ignore
+            )
 
-        url = Urls.Hooks.delete.format(hook_id)
-        async with self._session.delete(url) as response:
-            return await response.json()
+        url = urls.web_hooks.delete.format(hook_id)
+        response = await self._tools.connector.request("DELETE", url)
+        return await self._make_return(
+            response, forces_return_type=returns.ReturnType.JSON
+        )
 
     async def new_hooks(
         self, new_url: str, transactions_types: int = 2
@@ -363,16 +402,20 @@ class Wallet(requests.Requests):
         if not self.phone_number:
             self._raise_for_phone()
 
-        url = Urls.Balance.balance.format(self.phone_number)
+        url = urls.balance.balance.format(self.phone_number)
 
         if not alias:
-            async with self._session.get(url) as response:
-                return await self.make_return(response, balance.Balance)
+            response = await self._tools.connector.request("GET", url)
+            return await self._make_return(response, balance.Balance)
 
-        url = Urls.Balance.set_new_balance.format(self.phone_number, alias)
+        url = urls.balance.set_new_balance.format(self.phone_number, alias)
 
-        async with self._session.patch(url, data={"defaultAccount": True}) as response:
-            return await response.json()
+        response = await self._tools.connector.request(
+            "PATCH", url, data={"defaultAccount": True}
+        )
+        return await self._make_return(
+            response, forces_return_type=returns.ReturnType.JSON
+        )
 
     async def available_balances(self) -> List[offer.Offer]:
         """
@@ -382,10 +425,10 @@ class Wallet(requests.Requests):
         if not self.phone_number:
             self._raise_for_phone()
 
-        url = Urls.Balance.available_aliases
+        url = urls.balance.available_aliases.format(self.phone_number)
 
-        async with self._session.get(url) as response:
-            return await self.make_return(response, offer.Offer)
+        response = await self._tools.connector.request("GET", url)
+        return await self._make_return(response, offer.Offer, forces_return_type=returns.ReturnType.LIST_OF_MODELS)
 
     # end region
 
@@ -403,19 +446,20 @@ class Wallet(requests.Requests):
         """
         :return: Payment (completed)
         """
-        url = Urls.Payments.base.format(provider_id)
+        url = urls.payments.base.format(provider_id)
 
-        if not payment_type.id:
-            payment_type.id = str(time.time() * 1000)
+        if payment_type.id is None:
+            payment_type.id = str(int(time.time() * 1000))
 
-        async with self._session.post(url, data=payment_type.json()) as response:
-            return await self.make_return(response, payment.Payment)
+        json_data = payment_type.json(by_alias=True)
+        response = await self._tools.connector.request("POST", url, data=json_data)
+        return await self._make_return(response, payment.Payment)
 
     async def commission(
         self,
         amount: float,
         receiver: Union[str, int],
-        provider: Union[enums.Provider] = enums.Provider.QIWI_WALLET,
+        provider: int = enums.Provider.QIWI_WALLET,
         *,
         currency: Union[currencies.CurrencyModel, str, int] = "643",
     ) -> commission.Commission:
@@ -427,11 +471,11 @@ class Wallet(requests.Requests):
         :param currency: ISO of currency DEFAULT and the only acceptable(from qiwidocs) is 643 ruble
         :return:
         """
-        url = Urls.Payments.commission.format(enums.Provider(provider).value)
+        url = urls.payments.commission.format(provider)
 
         currency_isoformat = self._get_currency_isoformat(currency)
 
-        data = self.json_module.serialize(
+        data = self._tools.json_module.serialize(
             {
                 "account": phone_module.parse_phone(receiver),
                 "paymentMethod": {"type": "Account", "accountId": currency_isoformat},
@@ -441,8 +485,8 @@ class Wallet(requests.Requests):
             }
         )
 
-        async with self._session.post(url, data=data) as response:
-            return await self.make_return(response, commission.Commission)
+        response = await self._tools.connector.request("POST", url, data=data)
+        return await self._make_return(response, commission.Commission)
 
     async def detect_provider(
         self, phone: Optional[Union[str, int]] = None
@@ -456,16 +500,18 @@ class Wallet(requests.Requests):
         if not phone and not self.phone_number:
             self._raise_for_phone()
 
-        url = Urls.Payments.providers
-        params = self.params_filter({"phone": phone or self.phone_number})
+        url = urls.payments.providers
+        params = self._filter_dict({"phone": phone or self.phone_number})
 
         headers = {
             "Accept": "application/json",
             "Content-type": "application/x-www-form-urlencoded",
         }
 
-        async with self._session.get(url, params=params, headers=headers) as response:
-            return await self.make_return(response, phone_provider.Provider)
+        response = await self._tools.connector.request(
+            "GET", url, params=params, headers=headers
+        )
+        return await self._make_return(response, phone_provider.Provider)
 
     # end region
 
@@ -475,26 +521,42 @@ class Wallet(requests.Requests):
         host: str = "localhost",
         port: int = 7494,
         path: Optional[str] = None,
-        app: Optional[web.Application] = None,
+        app: Optional["web.Application"] = None,
+        close_connector_ate: bool = True,
     ):
         """
+        :param close_connector_ate: close connector at the end.
         :param host: server host
         :param port: server port that open for tcp/ip trans.
         :param path: path for qiwi that will send requests
         :param app: pass web.Application if you want, common-use - aiogram powered webhook-bots
         """
-        app = app or web.Application()
-        server.setup(self.handler_manager, app, path)
+        from aiohttp import web
 
+        app = app if app is not None else web.Application()
+
+        if close_connector_ate:
+            app.on_shutdown.append(self._on_app_shutdown)
+
+        server.setup(self.handler_manager, app, path)
         web.run_app(app, host=host, port=port)
 
-    def configure_for_app(self, app, path=None):
+    def configure_for_app(
+        self, app: "web.Application", path: str = None, close_connector_ate: bool = True
+    ):
         """
         If you want to implement your start_webhook execution use this method and get configured listener with
         configured web-view for passed path[see default in webhooks/server.py]
+        :param close_connector_ate: close connector at the end.
         :param app: aiohttp.web.Application initialized
         :param path: url path
         """
+        if close_connector_ate:
+            app.on_shutdown.append(self._on_app_shutdown)
+
         server.setup(self.handler_manager, app, path)
+
+    async def _on_app_shutdown(self, _):
+        await self.close()
 
     # end region

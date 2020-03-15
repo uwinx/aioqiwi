@@ -9,7 +9,7 @@ from aioqiwi.types import BaseModel
 class FundingSourceCommission(BaseModel):
     """Object: fundingSourceCommission"""
 
-    amount: int = Field(..., alias="amount")
+    amount: float = Field(..., alias="amount")
     currency: str = Field(..., alias="currency")
 
 
@@ -23,7 +23,7 @@ class QwCommission(BaseModel):
 class EnrollmentSum(BaseModel):
     """Object: enrollmentSum"""
 
-    amount: int = Field(..., alias="amount")
+    amount: float = Field(..., alias="amount")
     currency: str = Field(..., alias="currency")
 
 

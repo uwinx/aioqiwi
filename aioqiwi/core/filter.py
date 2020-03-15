@@ -17,7 +17,7 @@ class Filter:
     __name__: str
 
     def __init__(self, function: CF):
-        self.__name__ = f"Filter around <{function}>"
+        self.__name__ = f"Filter around <{function!r}>"
 
         self.function: Callable = function
         self.awaitable: bool = inspect.iscoroutinefunction(

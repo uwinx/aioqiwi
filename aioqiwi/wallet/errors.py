@@ -1,4 +1,10 @@
 # parsed from https://developer.qiwi.com/ru/qiwi-wallet-personal/index.html?http#errors
+from typing import Optional
+
+from pydantic import Field
+
+from ..exceptions import BaseErrorModel
+
 
 qiwiErrorIds = {
     0: "OK",
@@ -37,3 +43,26 @@ httpRequestErrors = {
     423: "Слишком много запросов, сервис временно недоступен",
     500: "Внутренняя ошибка сервиса (превышена длина URL)",
 }
+
+
+class ErrorInfo(BaseErrorModel):
+    """Object: ErrorInfo"""
+
+    service_name: Optional[str] = Field(None, alias="serviceName")
+    error_code: Optional[str] = Field(None, alias="errorCode")
+    description: Optional[str] = Field(None, alias="description")
+    user_message: Optional[str] = Field(None, alias="userMessage")
+    date_time: Optional[str] = Field(None, alias="dateTime")
+    trace_id: Optional[str] = Field(None, alias="traceId")
+
+    @property
+    def error_message(self) -> str:
+        return (
+            f"{self.service_name} returned "
+            f"{self.user_message}({self.description}) "
+            f"{{"
+            f"trace_id={self.trace_id},"
+            f"date_time={self.date_time},"
+            f"error_code={self.error_code}"
+            f"}}"
+        )

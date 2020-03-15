@@ -1,10 +1,10 @@
 import typing
 
 from ..core import requests, returns
-from ..urls import Urls
 from .types.partner import Partner
 from .types.polygon import Polygon
 from .types.terminal import Terminal
+from .urls import urls
 
 
 class QiwiMaps(requests.Requests):
@@ -36,9 +36,9 @@ class QiwiMaps(requests.Requests):
         :param terminal_groups: look at QiwiMaps.partners
         :return: list of Terminal instances
         """
-        url = Urls.Maps.base
+        url = urls.base
 
-        params = self.params_filter(
+        params = self._filter_dict(
             {
                 **polygon.dict,
                 "zoom": zoom,
@@ -52,8 +52,8 @@ class QiwiMaps(requests.Requests):
             }
         )
 
-        async with self._session.get(url, params=params) as resp:
-            return await self.make_return(
+        async with self._tools.connector.request("GET", url, params=params) as resp:
+            return await self._make_return(
                 resp,
                 Terminal,
                 forces_return_type=returns.ReturnType.LIST_OF_MODELS,  # type: ignore
@@ -65,10 +65,10 @@ class QiwiMaps(requests.Requests):
         :return: list of TTPGroups
         """
 
-        url = Urls.Maps.ttp_groups
+        url = urls.ttp_groups
 
-        async with self._session.get(url) as response:
-            return await self.make_return(
+        async with self._tools.connector.request("GET", url) as response:
+            return await self._make_return(
                 response,
                 Partner,
                 forces_return_type=returns.ReturnType.LIST_OF_MODELS,  # type: ignore

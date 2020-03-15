@@ -1,15 +1,4 @@
-import pathlib
-import re
-
 from setuptools import find_packages, setup
-
-WORK_DIR = pathlib.Path(__file__).parent
-
-code = (WORK_DIR / "aioqiwi" / "__init__.py").read_text("utf-8")
-try:
-    version = re.findall(r"""^__version__ = "([^']+)"\r?$""", code, re.M)[0]
-except IndexError:
-    raise RuntimeError("Unable to determine version.")
 
 
 with open("readme.rst", "r", encoding="utf-8") as f:
@@ -18,7 +7,7 @@ with open("readme.rst", "r", encoding="utf-8") as f:
 
 setup(
     name="aioqiwi",
-    version=version,
+    version="1.1.0",
     packages=find_packages(exclude=("examples.*", "test.*", "docs", "test")),
     url="https://github.com/uwinx/aioqiwi",
     license="MIT",
@@ -32,8 +21,9 @@ setup(
         "Framework :: AsyncIO",
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
-    install_requires=["aiohttp>=3.6.2,<4.0", 'pydantic>=1.4,<2.0'],
+    install_requires=["aiohttp>=3.6.2", 'pydantic>=1.4'],
     include_package_data=False,
     keywords="qiwi.com api-wrapper qiwi-api aiohttp server webhooks",
 )

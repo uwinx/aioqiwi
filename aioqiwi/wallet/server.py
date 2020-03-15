@@ -1,6 +1,5 @@
 import ipaddress
 import logging
-import typing
 
 from aiohttp.web import Application
 
