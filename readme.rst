@@ -16,7 +16,7 @@ Installation
 
 ::
 
-    pip install "https://github.com/uwinx/aioqiwi/archive/master.zip"
+    pip install aioqiwi
 
 ---------------
 🔸 Dependencies
