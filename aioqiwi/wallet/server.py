@@ -1,12 +1,9 @@
 import ipaddress
-import logging
 
 from aiohttp.web import Application
 
 from ..core import handler, server
 from ..wallet.types import webhook
-
-logger = logging.getLogger("aioqiwi")
 
 DEFAULT_QIWI_WEBHOOK_PATH = "/webhooks/qiwi/"
 DEFAULT_QIWI_ROUTER_NAME = "QIWI"
@@ -17,8 +14,6 @@ QIWI_IP_1 = ipaddress.IPv4Address("91.232.231.36")
 QIWI_IP_2 = ipaddress.IPv4Address("91.232.231.35")
 
 allowed_ips = {QIWI_IP_1, QIWI_IP_2}
-
-logger.info(f"Default allowed qiwi-addresses are {allowed_ips}")
 
 
 def _check_ip(ip: str) -> bool:
@@ -52,4 +47,3 @@ def setup(handler_manager: handler.HandlerManager, app: Application, path: str =
     app[QiwiWalletWebView.app_key_handler_manager] = handler_manager
     path = path or DEFAULT_QIWI_WEBHOOK_PATH
     app.router.add_view(path, QiwiWalletWebView, name=DEFAULT_QIWI_ROUTER_NAME)
-    logger.info(f"Added view to endpoint {path}")

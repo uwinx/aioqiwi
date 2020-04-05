@@ -23,8 +23,8 @@ class QiwiKassa(Requests):
         self,
         api_hash: str,
         timeout: Optional[Union[float, int]] = None,
-        loop: asyncio.AbstractEventLoop = None,
-        event_process_strategy: handler.EventProcessStrategy = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        event_process_strategy: Optional[handler.EventProcessStrategy] = None,
     ):
         """
         Beta of kassa.qiwi.com currently developing
@@ -116,7 +116,7 @@ class QiwiKassa(Requests):
             }
         )
 
-        response = await self._tools.connector.request("PUT", url, data=data)
+        response = await self.connector.request("PUT", url, data=data)
         return await self._make_return(response, invoice.Invoice)
 
     async def bill_info(self, bill_id: str) -> invoice.Invoice:
@@ -127,7 +127,7 @@ class QiwiKassa(Requests):
         """
         url = urls.bill.format(bill_id)
 
-        response = await self._tools.connector.request("GET", url)
+        response = await self.connector.request("GET", url)
         return await self._make_return(response, invoice.Invoice)
 
     async def reject_bill(self, bill_id: str) -> invoice.Invoice:
@@ -138,7 +138,7 @@ class QiwiKassa(Requests):
         """
         url = urls.reject.format(bill_id)
 
-        response = await self._tools.connector.request("POST", url)
+        response = await self.connector.request("POST", url)
         return await self._make_return(response, invoice.Invoice)
 
     async def refund(
@@ -159,14 +159,14 @@ class QiwiKassa(Requests):
         url = urls.refund.format(bill_id, refund_id)
 
         if not amount and not currency:
-            response = await self._tools.connector.request("GET", url)
+            response = await self.connector.request("GET", url)
             return await self._make_return(response, refund.Refund)
 
         data = self._tools.json_module.serialize(
             {"amount": {"currency": self._get_currency_code(currency), "value": amount}}
         )
 
-        response = await self._tools.connector.request("PUT", url, data=data)
+        response = await self.connector.request("PUT", url, data=data)
         return await self._make_return(response, refund.Refund)
 
     def configure_listener(

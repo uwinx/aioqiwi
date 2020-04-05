@@ -8,8 +8,8 @@ from .urls import urls
 
 
 class QiwiMaps(requests.Requests):
-    def __init__(self):
-        super().__init__(None, acpt_type="application/json;charser=UTF-8")
+    def __init__(self, timeout: typing.Optional[float] = None):
+        super().__init__(None, acpt_type="application/json;charser=UTF-8", timeout=timeout)
 
     async def terminals(
         self,
@@ -52,12 +52,12 @@ class QiwiMaps(requests.Requests):
             }
         )
 
-        async with self._tools.connector.request("GET", url, params=params) as resp:
-            return await self._make_return(
-                resp,
-                Terminal,
-                forces_return_type=returns.ReturnType.LIST_OF_MODELS,  # type: ignore
-            )
+        response = self.connector.request("GET", url, params=params)
+        return await self._make_return(
+            response,
+            Terminal,
+            forces_return_type=returns.ReturnType.LIST_OF_MODELS,  # type: ignore
+        )
 
     async def partners(self) -> typing.List[Partner]:
         """
@@ -67,9 +67,13 @@ class QiwiMaps(requests.Requests):
 
         url = urls.ttp_groups
 
-        async with self._tools.connector.request("GET", url) as response:
-            return await self._make_return(
-                response,
-                Partner,
-                forces_return_type=returns.ReturnType.LIST_OF_MODELS,  # type: ignore
-            )
+        response = await self.connector.request(
+            "GET",
+            url,
+            headers={"Content-type": "text/json"}
+        )
+        return await self._make_return(
+            response,
+            Partner,
+            forces_return_type=returns.ReturnType.LIST_OF_MODELS,  # type: ignore
+        )

@@ -25,7 +25,7 @@ Installation
 +------------+----------------------------+
 | Library    | Description                |
 +============+============================+
-|  aiohttp   | default http server/client |
+|  aiohttp   | default http server        |
 +------------+----------------------------+
 |  pydantic  | schema validation          |
 +------------+----------------------------+
@@ -44,6 +44,9 @@ Installation
 
     wallet = Wallet()
     wallet.tools.json_module = json.JSONModule("orjson")
+
+.. note::
+    You may want to try out "Out of the box" asyncio connector.
 
 --------------------
 🔹 Dive-in Examples
@@ -92,8 +95,21 @@ Installation
 
 When you do `Wallet::idle`, aioqiwi adds connector closing to `aiohttp.web.Application::on_shutdown` to make sure connector closes, however if you want to avoid this behaviour pass `close_connector_ate=False` to `Wallet::idle`
 
-[WIP] Some users don't want mess with web-hooks, for those fellas aioqiwi has `history_polling` in `aioqiwi.contrib`. Different approach for dealing with payment events.
-Find usage example in `examples/` directory.
+****************
+Handler manager
+****************
+
+Handler manager `QiwiClient.handler_manager` or `qiwi_client.hm` is responsible for event-handlers registering and filtering/delivering updates to them.
+There're currently two event processing strategies:
+1. `core.handler.EventProcessStrategy.ORDERED` - sequential filter-check. has O(n) amplitude
+2. `core.handler.EventProcessStrategy.MILKSHAKE` - as receives update, will shuffle existing handlers list. has O(n) amplitude
+
+.. note::
+    Filters results are not currently cached.
+
+.. note::
+    Some users don't want mess with web-hooks, for those fellas aioqiwi has `history_polling` [wip] in `aioqiwi.contrib`. Different approach for dealing with payment events.
+    Find usage example in `examples/` directory.
 
 ---------------------------------------------------
 🔥 Qiwi API p2p transactions(bills)
@@ -146,9 +162,40 @@ Find usage example in `examples/` directory.
 **aioqiwi** covers qiwi's `MAPS
 <https://developer.qiwi.com/ru/qiwi-map>`_ api in aioqiwi.terminals module
 
+---------------
+Connectors
+---------------
+
+QiwiClient.connector is responsible for making http requests. Current available request managers are located in `aioqiwi.core.connectors`
+
+Default connector is `aioqiwi.core.connectors.asyncio`, but if it's no suit for you, you can easily switch to another
+
+Example:
+
+.. code:: python3
+
+    from aioqiwi import Wallet
+    from aioqiwi.core.connectors.aiohttp import AiohttpConnector
+
+    wallet = Wallet("auth")
+    # switch with read-to-use connector-like instance implementing
+    wallet.connector = AiohttpConnector(timeout, {"user-agent": "opeka/02"})
+    # or switch with aioqiwi.core.connectors.abstract.Connector compatible class
+    wallet.connector = AiohttpConnector
+
+*******************
+Hacking connector
+*******************
+
+You can easily implement your own http client(connector), subclassing from `aioqiwi.core.connectors.abstract.AbstractConnector`. Take a look at "out of the box" `aiohttp` or `asyncio` sessions for the start.
+
 -----------------------
 👾 Handling errors
 -----------------------
+
+******************
+API request error
+******************
 
 Consider we have a `aioqiwi.wallet.Wallet` instance with a named reference `wallet` to it.
 Known error when we cannot ask server for more than 50 rows in `wallet.history`. To handle that error, we simply:
@@ -165,6 +212,13 @@ Known error when we cannot ask server for more than 50 rows in `wallet.history`.
             exc.err: ErrorInfo = exc.err  # cast to aioqiwi.Wallet's error info
             print(exc.err.error_message)
 
+***************
+TimeoutError
+***************
+
+This is slight different error and aioqiwi should not be really responsible for it. It's usually server-side error
+which makes exception that should be raised connector-specific. `asyncio.TimeoutError` is exception that is produced
+by `asyncio` connector. In `aiohttp` or other connectors it may differ.
 
 -----------------------------
 ⛏ return policies (types)
@@ -173,11 +227,11 @@ Known error when we cannot ask server for more than 50 rows in `wallet.history`.
 aioqiwi's server.BaseWebHookView and requests.Requests support "return policy", it means you can get response/update in the form that suits your needs.
 There're currently 5 return policies.
 
-NOTHING - returns nothing(note: None is python's implicit return), :note: returning nothing does not mean doing nothing, validation is done anyway
-READ_DATA - raw return once stream is read
-JSON - raw return once read data was deserialized
-MODEL - complex return once json deserialized and new model instantiated
-LIST_OF_MODELS - complex return once json deserialized as an iterable list with new instantiated models of json objects
+- NOTHING - returns nothing(note: None is python's implicit return), :note: returning nothing does not mean doing nothing, validation is done anyway
+- READ_DATA - raw return once stream is read
+- JSON - raw return once read data was deserialized
+- MODEL - complex return once json deserialized and new model instantiated
+- LIST_OF_MODELS - complex return once json deserialized as an iterable list with new instantiated models of json objects
 
 -------------------
 ❓ HOW-TOs
@@ -190,17 +244,14 @@ You can find examples in ``examples/`` directory in github repository. For start
 🔧 TODOs
 ---------------------------
 
-- **E2E Tests/CI/CD**
+- **Tests/CI/CD**
 - **Implement all qiwi wallet API methods**
-- **Make types generator open-source, keep types up-to-date without repository updates**
-
 
 -----------------
 Work in progress
 -----------------
 
-- Make `aiohttp` optional dependency implementing `asyncio` (from stdlib) connector
-- history_polling is currently unstable
+- history_polling needs to be tested
 - implement wallet web-hook payment verification
 
 ------------------------------------------

@@ -1,8 +1,6 @@
 from aioqiwi.wallet import Wallet, types, enums
 from aioqiwi.core.currencies import Currency
 
-from aioqiwi import Wallet
-
 wallet = Wallet("api-key", phone_number="phone-number")
 
 

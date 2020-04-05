@@ -1,14 +1,10 @@
 import ipaddress
-import logging
-import typing
 
 from aiohttp import web
 
 from ..core import handler, server
 from .crypto import hmac_key
 from .types import updates
-
-logger = logging.getLogger("aioqiwi")
 
 DEFAULT_QIWI_BILLS_WEBHOOK_PATH = "/webhooks/qiwi/bills/"
 DEFAULT_QIWI_ROUTER_NAME = "QIWI_BILLS"
@@ -77,7 +73,7 @@ def setup(
     secret_key: str,
     handler_manager: handler.HandlerManager,
     app: web.Application,
-    path=None,
+    path: str = None,
 ):
     app["_secret_key"] = secret_key
     app[QiwiBillServerWebView.app_key_check_ip] = _check_ip

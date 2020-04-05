@@ -1,4 +1,3 @@
-import logging
 import typing
 
 from aiohttp import web
@@ -8,9 +7,6 @@ from .tooling import json
 
 if typing.TYPE_CHECKING:
     from .handler import HandlerManager
-
-
-logger = logging.getLogger("aioqiwi")
 
 
 class BaseWebHookView(web.View):
@@ -39,7 +35,6 @@ class BaseWebHookView(web.View):
         if self.request.app.get(self.app_key_check_ip):
             ip_address, accept = self.check_ip()
             if not accept:
-                logger.warning(f"{ip_address} is not listed as allowed IP")
                 raise web.HTTPUnauthorized()
 
     def check_ip(self):
@@ -53,7 +48,6 @@ class BaseWebHookView(web.View):
             host, _ = peer_name
             return host, self._check_ip(host)
 
-        logger.info("Failed to get IP-address")
         return None, False
 
     async def post(self):

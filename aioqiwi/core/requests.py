@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from typing import List, Optional, Type, TypeVar, Union, AnyStr
 
 from pydantic import ValidationError
@@ -15,17 +14,15 @@ from . import handler, returns
 from .connectors import Connector, ConnectorException, Response
 from .tooling import datetime, json
 
+DEFAULT_TIMEOUT = 60.0
+
 M = TypeVar("M")
 R = Optional[Union[bytes, str, M, List[M]]]
 
-logger = logging.getLogger("aioqiwi.requests")
 core_loop = asyncio.get_event_loop()
 
 
 class Toolset:
-    connector: Optional[Connector] = None
-    """Custom connector for making requests, if None AiohttpConnector will be used"""
-
     return_type: returns.ReturnType = returns.ReturnType.MODEL
     """Returns (noun) as aioqiwi models by default"""
 
@@ -34,9 +31,6 @@ class Toolset:
 
     datetime_module: datetime.DatetimeModule = datetime.DatetimeModule()
     """Qiwi API datetime defaults tool"""
-
-    handler_manager: Optional[handler.HandlerManager] = None
-    """handler_manager class. sooner will be bind if needed"""
 
 
 default_toolset = Toolset()
@@ -51,11 +45,14 @@ class Requests:
     def __init__(
         self,
         auth: Optional[str],
-        timeout: Optional[Union[float, int]] = None,
+        timeout: Optional[float] = None,
         *,
         send_type: Optional[str] = None,
         acpt_type: Optional[str] = None,
         event_loop: Optional[asyncio.AbstractEventLoop] = None,
+        connector: Optional[Connector] = None,
+        close_connector_at_aexit: bool = True,
+        handler_manager: Optional[handler.HandlerManager] = None,
     ):
         headers = {
             "Accept": acpt_type or "application/json",
@@ -63,6 +60,7 @@ class Requests:
             "Authorization": f"Bearer {auth}"
             if auth
             else None,  # maps api does not require authorization
+            "User-Agent": "aioqiwi/1.x"
         }
 
         self._tools = default_toolset
@@ -70,15 +68,24 @@ class Requests:
         if event_loop is None:
             event_loop = core_loop
 
-        if self._tools.connector is None:
-            from aioqiwi.core.connectors.aiohttp import AiohttpConnector
+        if connector is None:
+            default_headers = self._filter_dict(headers)
 
-            self._tools.connector = AiohttpConnector.new(
-                timeout=timeout,
-                default_headers=self._filter_dict(headers),
+            from aioqiwi.core.connectors.asyncio import AsyncioConnector
+
+            connector = AsyncioConnector(
+                timeout=timeout or DEFAULT_TIMEOUT,
+                default_headers=default_headers,
                 loop=event_loop,
             )
 
+        if handler_manager is None:
+            handler_manager = handler.HandlerManager(loop=event_loop)
+
+        self.handler_manager = handler_manager
+
+        self._connector = connector
+        self.close_at_aexit = close_connector_at_aexit
         self.loop = event_loop
 
     @property
@@ -91,15 +98,32 @@ class Requests:
             raise TypeError(f"`tools` can be nothing but ToolSet, got {type(value)} instead")
         self._tools = value
 
+    @property
+    def connector(self) -> Connector:
+        return self._connector
+
+    @connector.setter
+    def connector(self, new_connector: Union[Type[Connector], Connector]):
+        if issubclass(new_connector, Connector):  # expect connector to be class
+            self._connector = new_connector.from_connector(self._connector)
+        else:
+            self._connector = new_connector
+
     async def _read_response(self, response: Response) -> AnyStr:
         try:
             data = await response.read()
 
             if response.status_code not in response.status_codes_success:
-                raise AioqiwiError.with_error_model(
-                    self._error_model,
-                    self._tools.json_module.deserialize(data)
-                )
+                try:
+                    err = AioqiwiError.with_error_model(
+                        self._error_model,
+                        self._tools.json_module.deserialize(data)
+                    )
+                    exc = None
+                except (TypeError, ValueError) as occ_exc:
+                    err = AioqiwiError()
+                    exc = occ_exc
+                raise err from exc
 
         except ConnectorException as exc:
             raise ReadDataProcessError("Connector error occurred while reading response") from exc
@@ -133,8 +157,7 @@ class Requests:
 
         try:
             json_data = self._tools.json_module.deserialize(data)
-        except (TypeError,) as exc:
-            logger.error(exc)
+        except (TypeError, ValueError):
             raise JSONDeserializeError("JSON parsing error")
 
         if (
@@ -162,17 +185,15 @@ class Requests:
 
     @property
     def hm(self) -> handler.HandlerManager:
-        """Handler manager"""
-        if self._tools.handler_manager is None:
-            raise ValueError(f"{self!r} does not have a initialized handler_manager")
-        return self._tools.handler_manager
+        """Handler manager but not :thinking_face:"""
+        return self.handler_manager
 
     async def close(self):
-        if self._tools.connector is not None:
-            await self._tools.connector.close()
+        await self.connector.close()
 
     async def __aenter__(self):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()
+        if self.close_at_aexit:
+            await self.close()

@@ -48,13 +48,14 @@ class Wallet(requests.Requests):
         phone_number: Optional[Union[str, int]] = None,
         loop=None,
         event_process_strategy: handler.EventProcessStrategy = None,
+        timeout: Optional[float] = None,
     ):
         """
         Main class for requests
         :param api_hash: Qiwi unique token given for an account
         :param phone_number: Bind phone number integer or string
         """
-        super().__init__(api_hash, event_loop=loop)
+        super().__init__(api_hash, event_loop=loop, timeout=timeout)
 
         if phone_number:
             self._phone_number = phone_module.parse_phone(phone_number)
@@ -126,7 +127,7 @@ class Wallet(requests.Requests):
             }
         )
 
-        response = await self._tools.connector.request("GET", url, params=params)
+        response = await self.connector.request("GET", url, params=params)
         return await self._make_return(
             response=response, current_model=auth_user.AuthUser
         )
@@ -148,11 +149,11 @@ class Wallet(requests.Requests):
         url = urls.identification.format(self.phone_number)
 
         if not identification_class:
-            response = await self._tools.connector.request("GET", url)
+            response = await self.connector.request("GET", url)
             return await self._make_return(response, identification.Identification)
 
-        response = await self._tools.connector.request(
-            "POST", url, json=identification_class.json()
+        response = await self.connector.request(
+            "POST", url, data=identification_class.json()
         )
         return await self._make_return(response, identification.Identification)
 
@@ -213,7 +214,7 @@ class Wallet(requests.Requests):
             }
         )
 
-        response = await self._tools.connector.request("GET", url, params=params)
+        response = await self.connector.request("GET", url, params=params)
         return await self._make_return(response, history.History)
 
     async def stats(
@@ -250,7 +251,7 @@ class Wallet(requests.Requests):
             }
         )
 
-        response = await self._tools.connector.request("GET", url, params=params)
+        response = await self.connector.request("GET", url, params=params)
         return await self._make_return(response, stats.Stats)
 
     async def download_cheque(
@@ -277,7 +278,7 @@ class Wallet(requests.Requests):
             "format": file_fmt,
         }
 
-        response = await self._tools.connector.request("GET", url, params=params)
+        response = await self.connector.request("GET", url, params=params)
         await self._make_return(response, None, forces_return_type=returns.ReturnType.NOTHING)
         destination = f"{destination_dir}/{filename or ('aioqiwi_' + str(transaction_id))}.{file_fmt.lower()}"
         # files are primarily have `small` size, so no need to read/write chunk
@@ -293,11 +294,11 @@ class Wallet(requests.Requests):
     async def request_cheque(self, transaction_id: int, transaction_type: enums.PaymentTypes, email: str) -> None:
         transaction_type = enums.PaymentTypes(transaction_type).value
 
-        response = await self._tools.connector.request(
+        response = await self.connector.request(
             "POST",
             url=urls.request_cheque.format(transaction_id),
             params=self._filter_dict({"type": transaction_type}),
-            data={"email": email}
+            data=self.tools.json_module.serialize({"email": email})
         )
         await self._make_return(
             response,
@@ -330,7 +331,7 @@ class Wallet(requests.Requests):
 
         if not server_url and not transactions_type:
             url = urls.web_hooks.test if send_test_notification else urls.web_hooks.active
-            response = await self._tools.connector.request("GET", url)
+            response = await self.connector.request("GET", url)
             if not send_test_notification:
                 return await self._make_return(
                     response,
@@ -344,7 +345,7 @@ class Wallet(requests.Requests):
             {"hookType": 1, "param": server_url, "txnType": transactions_type or 2}
         )
 
-        response = await self._tools.connector.request("PUT", url, params=params)
+        response = await self.connector.request("PUT", url, params=params)
         return await self._make_return(
             response, webhook.WebHook, forces_return_type=returns.ReturnType.JSON
         )
@@ -362,7 +363,7 @@ class Wallet(requests.Requests):
             )
 
         url = urls.web_hooks.delete.format(hook_id)
-        response = await self._tools.connector.request("DELETE", url)
+        response = await self.connector.request("DELETE", url)
         return await self._make_return(
             response, forces_return_type=returns.ReturnType.JSON
         )
@@ -405,13 +406,13 @@ class Wallet(requests.Requests):
         url = urls.balance.balance.format(self.phone_number)
 
         if not alias:
-            response = await self._tools.connector.request("GET", url)
+            response = await self.connector.request("GET", url)
             return await self._make_return(response, balance.Balance)
 
         url = urls.balance.set_new_balance.format(self.phone_number, alias)
 
-        response = await self._tools.connector.request(
-            "PATCH", url, data={"defaultAccount": True}
+        response = await self.connector.request(
+            "PATCH", url, data=self.tools.json_module.serialize({"defaultAccount": True})
         )
         return await self._make_return(
             response, forces_return_type=returns.ReturnType.JSON
@@ -427,7 +428,7 @@ class Wallet(requests.Requests):
 
         url = urls.balance.available_aliases.format(self.phone_number)
 
-        response = await self._tools.connector.request("GET", url)
+        response = await self.connector.request("GET", url)
         return await self._make_return(response, offer.Offer, forces_return_type=returns.ReturnType.LIST_OF_MODELS)
 
     # end region
@@ -452,7 +453,7 @@ class Wallet(requests.Requests):
             payment_type.id = str(int(time.time() * 1000))
 
         json_data = payment_type.json(by_alias=True)
-        response = await self._tools.connector.request("POST", url, data=json_data)
+        response = await self.connector.request("POST", url, data=json_data)
         return await self._make_return(response, payment.Payment)
 
     async def commission(
@@ -485,7 +486,7 @@ class Wallet(requests.Requests):
             }
         )
 
-        response = await self._tools.connector.request("POST", url, data=data)
+        response = await self.connector.request("POST", url, data=data)
         return await self._make_return(response, commission.Commission)
 
     async def detect_provider(
@@ -508,7 +509,7 @@ class Wallet(requests.Requests):
             "Content-type": "application/x-www-form-urlencoded",
         }
 
-        response = await self._tools.connector.request(
+        response = await self.connector.request(
             "GET", url, params=params, headers=headers
         )
         return await self._make_return(response, phone_provider.Provider)

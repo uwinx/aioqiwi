@@ -41,7 +41,7 @@ class HistoryPoll:
         limit: int = DEFAULT_LIMIT,
         process_old_to_new: bool = True,
     ):
-        if client._tools.return_type is not ReturnType.MODEL:
+        if client.tools.return_type is not ReturnType.MODEL:
             raise ValueError("Wallet::return_type must be `MODEL` for history polling")
 
         self._client = client
