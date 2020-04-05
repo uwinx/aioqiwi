@@ -1,40 +1,39 @@
 """
 If modules share two objects with the same name, we don't import these objects.
 """
-from .offer import Offer
-from .stats import Stats, IncomingTotal, OutgoingTotal
-from .balance import Type, Balance, Accounts, AccountBalance
-from .history import Data, History, Provider, Commission
-from .payment import (
-    State,
-    Fields,
-    Payment,
-    CellTopUp,
-    BankFields,
-    CardFields,
-    P2PPayment,
-    BankPayment,
-    CardPayment,
-    Transaction,
-    PaymentMethod,
-)
-from .webhook import WebHook, Commission, WebHookConfig, HookParameters
 from .auth_user import (
-    PinInfo,
     AuthInfo,
     AuthUser,
-    PassInfo,
-    UserInfo,
     ContractInfo,
-    MobilePinInfo,
     IdentificationInfo,
+    MobilePinInfo,
+    PassInfo,
+    PinInfo,
+    UserInfo,
 )
+from .balance import AccountBalance, Accounts, Balance, Type
 from .commission import (
-    Commission,
-    WithdrawSum,
-    QwCommission,
     EnrollmentSum,
     FundingSourceCommission,
+    QwCommission,
+    WithdrawSum,
 )
+from .history import History, PaymentData
 from .identification import Identification
-from .phone_provider import Code, Provider
+from .offer import Offer
+from .payment import (
+    BankFields,
+    BankPayment,
+    CardFields,
+    CardPayment,
+    CellTopUp,
+    Fields,
+    P2PPayment,
+    Payment,
+    PaymentMethod,
+    State,
+    Transaction,
+)
+from .phone_provider import Code
+from .stats import IncomingTotal, OutgoingTotal, Stats
+from .webhook import HookParameters, WebHook, WebHookConfig

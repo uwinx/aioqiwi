@@ -1,13 +1,11 @@
 """
 Main model: History
 """
-from typing import List, Union
+from typing import Any, List, Optional, Union
 
 from pydantic import Field
 
 from aioqiwi.types import BaseModel
-
-NoneType = type(None)
 
 
 class Provider(BaseModel):
@@ -15,11 +13,11 @@ class Provider(BaseModel):
 
     id: int = Field(..., alias="id")
     short_name: str = Field(..., alias="shortName")
-    long_name: str = Field(..., alias="longName")
-    logo_url: str = Field(..., alias="logoUrl")
-    description: str = Field(..., alias="description")
-    keys: str = Field(..., alias="keys")
-    site_url: Union[str, bool, int, NoneType] = Field(NoneType, alias="siteUrl")
+    long_name: Optional[str] = Field(None, alias="longName")
+    logo_url: Optional[str] = Field(None, alias="logoUrl")
+    description: Optional[str] = Field(None, alias="description")
+    keys: Optional[str] = Field(None, alias="keys")
+    site_url: Optional[Any] = Field(None, alias="siteUrl")
 
 
 class Total(BaseModel):
@@ -39,30 +37,30 @@ class Commission(BaseModel):
 class Sum(BaseModel):
     """Object: sum"""
 
-    amount: int = Field(..., alias="amount")
+    amount: float = Field(..., alias="amount")
     currency: str = Field(..., alias="currency")
 
 
-class Data(BaseModel):
+class PaymentData(BaseModel):
     """Object: data"""
 
     txn_id: int = Field(..., alias="txnId")
     person_id: int = Field(..., alias="personId")
     date: str = Field(..., alias="date")
     error_code: int = Field(..., alias="errorCode")
-    error: Union[str, bool, int, NoneType] = Field(NoneType, alias="error")
+    error: Optional[Any] = Field(None, alias="error")
     status: str = Field(..., alias="status")
     type: str = Field(..., alias="type")
     status_text: str = Field(..., alias="statusText")
     trm_txn_id: str = Field(..., alias="trmTxnId")
     account: str = Field(..., alias="account")
-    comment: Union[str, bool, int, NoneType] = Field(NoneType, alias="comment")
+    comment: Optional[Any] = Field(None, alias="comment")
     currency_rate: int = Field(..., alias="currencyRate")
-    extras: Union[str, bool, int, NoneType] = Field(NoneType, alias="extras")
-    cheque_ready: bool = Field(..., alias="chequeReady")
-    bank_document_available: bool = Field(..., alias="bankDocumentAvailable")
-    bank_document_ready: bool = Field(..., alias="bankDocumentReady")
-    repeat_payment_enabled: bool = Field(..., alias="repeatPaymentEnabled")
+    extras: Optional[Any] = Field(None, alias="extras")
+    cheque_ready: Optional[bool] = Field(None, alias="chequeReady")
+    bank_document_available: Optional[bool] = Field(None, alias="bankDocumentAvailable")
+    bank_document_ready: Optional[bool] = Field(None, alias="bankDocumentReady")
+    repeat_payment_enabled: Optional[bool] = Field(None, alias="repeatPaymentEnabled")
     sum: Sum = Field(..., alias="sum")
     commission: Commission = Field(..., alias="commission")
     total: Total = Field(..., alias="total")
@@ -72,6 +70,6 @@ class Data(BaseModel):
 class History(BaseModel):
     """Object: History"""
 
-    data: List[Data] = Field(..., alias="data")
-    next_txn_id: int = Field(..., alias="nextTxnId")
-    next_txn_date: str = Field(..., alias="nextTxnDate")
+    data: List[PaymentData] = Field(..., alias="data")
+    next_txn_id: Optional[int] = Field(None, alias="nextTxnId")
+    next_txn_date: Optional[str] = Field(None, alias="nextTxnDate")

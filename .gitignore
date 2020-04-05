@@ -101,3 +101,9 @@ ENV/
 
 # ms-vscode
 .vscode/
+
+# mypy cache
+/.mypy_cache/
+
+# private models generator
+/genmod

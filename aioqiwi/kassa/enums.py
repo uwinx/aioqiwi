@@ -1,13 +1,13 @@
-from enum import Enum
+from aioqiwi.types.base import NamedEnum, name
 
 
-class BillStatuses(Enum):
-    WAITING = "WAITING"
-    PAID = "PAID"
-    REJECTED = "REJECTED"
-    EXPIRED = "EXPIRED"
+class BillStatuses(NamedEnum):
+    WAITING = name()
+    PAID = name()
+    REJECTED = name()
+    EXPIRED = name()
 
 
-class RefundStatuses(Enum):
-    PARTIAL = "PARTIAL"
-    FULL = "FULL"
+class RefundStatuses(NamedEnum):
+    PARTIAL = name()
+    FULL = name()

@@ -1,17 +1,10 @@
-import typing
-import logging
 import ipaddress
 
 from aiohttp import web
 
-from .types import updates
+from ..core import handler, server
 from .crypto import hmac_key
-from ..server import BaseWebHookView
-from ..requests import deserialize
-
-logger = logging.getLogger("aioqiwi")
-
-logger.info(f"Deserialization tool: {deserialize.__name__}")
+from .types import updates
 
 DEFAULT_QIWI_BILLS_WEBHOOK_PATH = "/webhooks/qiwi/bills/"
 DEFAULT_QIWI_ROUTER_NAME = "QIWI_BILLS"
@@ -30,23 +23,9 @@ def _check_ip(ip: str) -> bool:
     return address in allowed_ips
 
 
-def allow_ip(*ips: typing.Union[str, ipaddress.IPv4Network, ipaddress.IPv4Address]):
-    for ip in ips:
-        if isinstance(ip, ipaddress.IPv4Address):
-            allowed_ips.add(ip)
-        elif isinstance(ip, str):
-            allowed_ips.add(ipaddress.IPv4Address(ip))
-        elif isinstance(ip, ipaddress.IPv4Network):
-            allowed_ips.update(ip.hosts())
-        else:
-            raise ValueError
-
-
-allow_ip(*allowed_ips)
-
-
-class QiwiBillServerWebView(BaseWebHookView):
-    _check_ip = staticmethod(_check_ip)
+class QiwiBillServerWebView(server.BaseWebHookView):
+    def _check_ip(self, ip: str):
+        return _check_ip(ip)
 
     def hash_validator(self, update):
         sha256 = self.request.headers.get("X-Api-Signature-SHA256")
@@ -70,7 +49,7 @@ class QiwiBillServerWebView(BaseWebHookView):
         :return: :class:`updated.QiwiUpdate`
         """
         data = await self.request.json()
-        return updates.Notification(**deserialize(data))
+        return updates.Notification(**self.json_module.deserialize(data))
 
     async def post(self):
         """
@@ -82,18 +61,23 @@ class QiwiBillServerWebView(BaseWebHookView):
 
         self.hash_validator(update)
 
-        await self._resolve_update(update)
+        await self.handler_manager.process_event(update)
 
         return web.json_response(data={"error": "0"}, status=200)
 
-    _app_key_check_ip = "_qiwi_kassa_check_ip"
-    _app_key_dispatcher = "_qiwi_kassa_dispatcher"
+    app_key_check_ip = "_qiwi_kassa_check_ip"
+    app_key_handler_manager = "_qiwi_kassa_handler_manager"
 
 
-def setup(secret_key, dispatcher, app: web.Application, path=None):
+def setup(
+    secret_key: str,
+    handler_manager: handler.HandlerManager,
+    app: web.Application,
+    path: str = None,
+):
     app["_secret_key"] = secret_key
-    app[QiwiBillServerWebView._app_key_check_ip] = _check_ip
-    app[QiwiBillServerWebView._app_key_dispatcher] = dispatcher
+    app[QiwiBillServerWebView.app_key_check_ip] = _check_ip
+    app[QiwiBillServerWebView.app_key_handler_manager] = handler_manager
     app.router.add_view(
         path or DEFAULT_QIWI_BILLS_WEBHOOK_PATH,
         QiwiBillServerWebView,

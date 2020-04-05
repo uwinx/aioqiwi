@@ -1,3 +1,5 @@
+from typing import Optional
+
 from aioqiwi.types import BaseModel
 
 
@@ -5,31 +7,31 @@ class Identification(BaseModel):
     id: int
     """Номер кошелька пользователя"""
 
-    birthDate: str
+    birthDate: Optional[str] = None
     """Дата рождения пользователя (в формате "ГГГГ-ММ-ДД")"""
 
-    firstName: str
+    firstName: Optional[str] = None
     """Имя пользователя"""
 
-    inn: str
+    inn: Optional[str] = None
     """ИНН пользователя"""
 
-    lastName: str
+    lastName: Optional[str] = None
     """Фамилия пользователя"""
 
-    middleName: str
+    middleName: Optional[str] = None
     """Отчество пользователя"""
 
-    oms: str
+    oms: Optional[str] = None
     """Номер полиса ОМС пользователя"""
 
-    passport: str
+    passport: Optional[str] = None
     """Серия и номер паспорта пользователя (только цифры)"""
 
-    snils: str
+    snils: Optional[str] = None
     """Номер СНИЛС пользователя"""
 
-    type: str = None
+    type: Optional[str] = None
     """
     Текущий уровень идентификации кошелька:
     SIMPLE - без идентификации.

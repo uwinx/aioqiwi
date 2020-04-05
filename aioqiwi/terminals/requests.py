@@ -1,18 +1,15 @@
 import typing
 
-from ..urls import Urls
-from ..requests import Requests
+from ..core import requests, returns
 from .types.partner import Partner
 from .types.polygon import Polygon
 from .types.terminal import Terminal
-from ..utils.requests import params_filter, new_http_session
+from .urls import urls
 
 
-class QiwiMaps(Requests):
-    def __init__(self):
-        self._session = new_http_session("", atype="application/json;charser=UTF-8")
-
-        self._get = self._session.get
+class QiwiMaps(requests.Requests):
+    def __init__(self, timeout: typing.Optional[float] = None):
+        super().__init__(None, acpt_type="application/json;charser=UTF-8", timeout=timeout)
 
     async def terminals(
         self,
@@ -25,7 +22,7 @@ class QiwiMaps(Requests):
         card_terminals: bool = None,
         identification_types: int = None,
         terminal_groups: list = None,
-    ) -> typing.List["Terminal"]:
+    ) -> typing.List["Terminal"]:  # type: ignore
         """
         Get map of terminals sent for passed polygon with additional params
         :param polygon: aioqiwi.models.polygon.Polygon model or dict with NW SE <l->l>s dict
@@ -39,9 +36,9 @@ class QiwiMaps(Requests):
         :param terminal_groups: look at QiwiMaps.partners
         :return: list of Terminal instances
         """
-        url = Urls.Maps.base
+        url = urls.base
 
-        params = params_filter(
+        params = self._filter_dict(
             {
                 **polygon.dict,
                 "zoom": zoom,
@@ -55,8 +52,12 @@ class QiwiMaps(Requests):
             }
         )
 
-        async with self._get(url, params=params) as resp:
-            return await self._make_return(resp, Terminal, as_list=True)
+        response = self.connector.request("GET", url, params=params)
+        return await self._make_return(
+            response,
+            Terminal,
+            forces_return_type=returns.ReturnType.LIST_OF_MODELS,  # type: ignore
+        )
 
     async def partners(self) -> typing.List[Partner]:
         """
@@ -64,11 +65,15 @@ class QiwiMaps(Requests):
         :return: list of TTPGroups
         """
 
-        url = Urls.Maps.ttp_groups
+        url = urls.ttp_groups
 
-        async with self._get(url) as response:
-            return await self._make_return(response, Partner, as_list=True)
-
-    # session-related
-    async def close(self):
-        await self._session.close()
+        response = await self.connector.request(
+            "GET",
+            url,
+            headers={"Content-type": "text/json"}
+        )
+        return await self._make_return(
+            response,
+            Partner,
+            forces_return_type=returns.ReturnType.LIST_OF_MODELS,  # type: ignore
+        )

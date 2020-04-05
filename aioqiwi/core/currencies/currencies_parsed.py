@@ -1,11 +1,11 @@
 # SOURCES: codes_number: https://www.iban.com/currency-codes
 # aioqiwi/utils/currencies/data/currencies.json
-from typing import Union, Optional
+from typing import Optional, Union
 
 from aioqiwi.types import BaseModel
 
 
-class Currency(BaseModel):
+class CurrencyModel(BaseModel):
     code: str
     decimal_digits: int
     name: str
@@ -187,7 +187,7 @@ codes_number = {
     "997": "USN",
 }
 described = {
-    "AED": Currency(
+    "AED": CurrencyModel(
         code="AED",
         decimal_digits=2,
         name="United Arab Emirates Dirham",
@@ -197,7 +197,7 @@ described = {
         symbol_native="د.إ.\u200f",
         isoformat="784",
     ),
-    "AFN": Currency(
+    "AFN": CurrencyModel(
         code="AFN",
         decimal_digits=0,
         name="Afghan Afghani",
@@ -207,7 +207,7 @@ described = {
         symbol_native="؋",
         isoformat="971",
     ),
-    "ALL": Currency(
+    "ALL": CurrencyModel(
         code="ALL",
         decimal_digits=0,
         name="Albanian Lek",
@@ -217,7 +217,7 @@ described = {
         symbol_native="Lek",
         isoformat="008",
     ),
-    "AMD": Currency(
+    "AMD": CurrencyModel(
         code="AMD",
         decimal_digits=0,
         name="Armenian Dram",
@@ -227,7 +227,7 @@ described = {
         symbol_native="դր.",
         isoformat="051",
     ),
-    "ARS": Currency(
+    "ARS": CurrencyModel(
         code="ARS",
         decimal_digits=2,
         name="Argentine Peso",
@@ -237,7 +237,7 @@ described = {
         symbol_native="$",
         isoformat="032",
     ),
-    "AUD": Currency(
+    "AUD": CurrencyModel(
         code="AUD",
         decimal_digits=2,
         name="Australian Dollar",
@@ -247,7 +247,7 @@ described = {
         symbol_native="$",
         isoformat="036",
     ),
-    "AZN": Currency(
+    "AZN": CurrencyModel(
         code="AZN",
         decimal_digits=2,
         name="Azerbaijani Manat",
@@ -257,7 +257,7 @@ described = {
         symbol_native="ман.",
         isoformat="944",
     ),
-    "BAM": Currency(
+    "BAM": CurrencyModel(
         code="BAM",
         decimal_digits=2,
         name="Bosnia-Herzegovina Convertible Mark",
@@ -267,7 +267,7 @@ described = {
         symbol_native="KM",
         isoformat="977",
     ),
-    "BDT": Currency(
+    "BDT": CurrencyModel(
         code="BDT",
         decimal_digits=2,
         name="Bangladeshi Taka",
@@ -277,7 +277,7 @@ described = {
         symbol_native="৳",
         isoformat="050",
     ),
-    "BGN": Currency(
+    "BGN": CurrencyModel(
         code="BGN",
         decimal_digits=2,
         name="Bulgarian Lev",
@@ -287,7 +287,7 @@ described = {
         symbol_native="лв.",
         isoformat="975",
     ),
-    "BHD": Currency(
+    "BHD": CurrencyModel(
         code="BHD",
         decimal_digits=3,
         name="Bahraini Dinar",
@@ -297,7 +297,7 @@ described = {
         symbol_native="د.ب.\u200f",
         isoformat="048",
     ),
-    "BIF": Currency(
+    "BIF": CurrencyModel(
         code="BIF",
         decimal_digits=0,
         name="Burundian Franc",
@@ -307,7 +307,7 @@ described = {
         symbol_native="FBu",
         isoformat="108",
     ),
-    "BND": Currency(
+    "BND": CurrencyModel(
         code="BND",
         decimal_digits=2,
         name="Brunei Dollar",
@@ -317,7 +317,7 @@ described = {
         symbol_native="$",
         isoformat="096",
     ),
-    "BOB": Currency(
+    "BOB": CurrencyModel(
         code="BOB",
         decimal_digits=2,
         name="Bolivian Boliviano",
@@ -327,7 +327,7 @@ described = {
         symbol_native="Bs",
         isoformat="068",
     ),
-    "BRL": Currency(
+    "BRL": CurrencyModel(
         code="BRL",
         decimal_digits=2,
         name="Brazilian Real",
@@ -337,7 +337,7 @@ described = {
         symbol_native="R$",
         isoformat="986",
     ),
-    "BWP": Currency(
+    "BWP": CurrencyModel(
         code="BWP",
         decimal_digits=2,
         name="Botswanan Pula",
@@ -347,7 +347,7 @@ described = {
         symbol_native="P",
         isoformat="072",
     ),
-    "BYR": Currency(
+    "BYR": CurrencyModel(
         code="BYR",
         decimal_digits=0,
         name="Belarusian Ruble",
@@ -357,7 +357,7 @@ described = {
         symbol_native="BYR",
         isoformat="974",
     ),
-    "BZD": Currency(
+    "BZD": CurrencyModel(
         code="BZD",
         decimal_digits=2,
         name="Belize Dollar",
@@ -367,7 +367,7 @@ described = {
         symbol_native="$",
         isoformat="084",
     ),
-    "CAD": Currency(
+    "CAD": CurrencyModel(
         code="CAD",
         decimal_digits=2,
         name="Canadian Dollar",
@@ -377,7 +377,7 @@ described = {
         symbol_native="$",
         isoformat="124",
     ),
-    "CDF": Currency(
+    "CDF": CurrencyModel(
         code="CDF",
         decimal_digits=2,
         name="Congolese Franc",
@@ -387,7 +387,7 @@ described = {
         symbol_native="FrCD",
         isoformat="976",
     ),
-    "CHF": Currency(
+    "CHF": CurrencyModel(
         code="CHF",
         decimal_digits=2,
         name="Swiss Franc",
@@ -397,7 +397,7 @@ described = {
         symbol_native="CHF",
         isoformat="756",
     ),
-    "CLP": Currency(
+    "CLP": CurrencyModel(
         code="CLP",
         decimal_digits=0,
         name="Chilean Peso",
@@ -407,7 +407,7 @@ described = {
         symbol_native="$",
         isoformat="152",
     ),
-    "CNY": Currency(
+    "CNY": CurrencyModel(
         code="CNY",
         decimal_digits=2,
         name="Chinese Yuan",
@@ -417,7 +417,7 @@ described = {
         symbol_native="CN¥",
         isoformat="156",
     ),
-    "COP": Currency(
+    "COP": CurrencyModel(
         code="COP",
         decimal_digits=0,
         name="Colombian Peso",
@@ -427,7 +427,7 @@ described = {
         symbol_native="$",
         isoformat="170",
     ),
-    "CRC": Currency(
+    "CRC": CurrencyModel(
         code="CRC",
         decimal_digits=0,
         name="Costa Rican Colón",
@@ -437,7 +437,7 @@ described = {
         symbol_native="₡",
         isoformat="188",
     ),
-    "CVE": Currency(
+    "CVE": CurrencyModel(
         code="CVE",
         decimal_digits=2,
         name="Cape Verdean Escudo",
@@ -447,7 +447,7 @@ described = {
         symbol_native="CV$",
         isoformat="132",
     ),
-    "CZK": Currency(
+    "CZK": CurrencyModel(
         code="CZK",
         decimal_digits=2,
         name="Czech Republic Koruna",
@@ -457,7 +457,7 @@ described = {
         symbol_native="Kč",
         isoformat="203",
     ),
-    "DJF": Currency(
+    "DJF": CurrencyModel(
         code="DJF",
         decimal_digits=0,
         name="Djiboutian Franc",
@@ -467,7 +467,7 @@ described = {
         symbol_native="Fdj",
         isoformat="262",
     ),
-    "DKK": Currency(
+    "DKK": CurrencyModel(
         code="DKK",
         decimal_digits=2,
         name="Danish Krone",
@@ -477,7 +477,7 @@ described = {
         symbol_native="kr",
         isoformat="208",
     ),
-    "DOP": Currency(
+    "DOP": CurrencyModel(
         code="DOP",
         decimal_digits=2,
         name="Dominican Peso",
@@ -487,7 +487,7 @@ described = {
         symbol_native="RD$",
         isoformat="214",
     ),
-    "DZD": Currency(
+    "DZD": CurrencyModel(
         code="DZD",
         decimal_digits=2,
         name="Algerian Dinar",
@@ -497,7 +497,7 @@ described = {
         symbol_native="د.ج.\u200f",
         isoformat="012",
     ),
-    "EEK": Currency(
+    "EEK": CurrencyModel(
         code="EEK",
         decimal_digits=2,
         name="Estonian Kroon",
@@ -507,7 +507,7 @@ described = {
         symbol_native="kr",
         isoformat=None,
     ),
-    "EGP": Currency(
+    "EGP": CurrencyModel(
         code="EGP",
         decimal_digits=2,
         name="Egyptian Pound",
@@ -517,7 +517,7 @@ described = {
         symbol_native="ج.م.\u200f",
         isoformat="818",
     ),
-    "ERN": Currency(
+    "ERN": CurrencyModel(
         code="ERN",
         decimal_digits=2,
         name="Eritrean Nakfa",
@@ -527,7 +527,7 @@ described = {
         symbol_native="Nfk",
         isoformat="232",
     ),
-    "ETB": Currency(
+    "ETB": CurrencyModel(
         code="ETB",
         decimal_digits=2,
         name="Ethiopian Birr",
@@ -537,7 +537,7 @@ described = {
         symbol_native="Br",
         isoformat="230",
     ),
-    "EUR": Currency(
+    "EUR": CurrencyModel(
         code="EUR",
         decimal_digits=2,
         name="Euro",
@@ -547,7 +547,7 @@ described = {
         symbol_native="€",
         isoformat="978",
     ),
-    "GBP": Currency(
+    "GBP": CurrencyModel(
         code="GBP",
         decimal_digits=2,
         name="British Pound Sterling",
@@ -557,7 +557,7 @@ described = {
         symbol_native="£",
         isoformat="826",
     ),
-    "GEL": Currency(
+    "GEL": CurrencyModel(
         code="GEL",
         decimal_digits=2,
         name="Georgian Lari",
@@ -567,7 +567,7 @@ described = {
         symbol_native="GEL",
         isoformat="981",
     ),
-    "GHS": Currency(
+    "GHS": CurrencyModel(
         code="GHS",
         decimal_digits=2,
         name="Ghanaian Cedi",
@@ -577,7 +577,7 @@ described = {
         symbol_native="GH₵",
         isoformat="936",
     ),
-    "GNF": Currency(
+    "GNF": CurrencyModel(
         code="GNF",
         decimal_digits=0,
         name="Guinean Franc",
@@ -587,7 +587,7 @@ described = {
         symbol_native="FG",
         isoformat="324",
     ),
-    "GTQ": Currency(
+    "GTQ": CurrencyModel(
         code="GTQ",
         decimal_digits=2,
         name="Guatemalan Quetzal",
@@ -597,7 +597,7 @@ described = {
         symbol_native="Q",
         isoformat="320",
     ),
-    "HKD": Currency(
+    "HKD": CurrencyModel(
         code="HKD",
         decimal_digits=2,
         name="Hong Kong Dollar",
@@ -607,7 +607,7 @@ described = {
         symbol_native="$",
         isoformat="344",
     ),
-    "HNL": Currency(
+    "HNL": CurrencyModel(
         code="HNL",
         decimal_digits=2,
         name="Honduran Lempira",
@@ -617,7 +617,7 @@ described = {
         symbol_native="L",
         isoformat="340",
     ),
-    "HRK": Currency(
+    "HRK": CurrencyModel(
         code="HRK",
         decimal_digits=2,
         name="Croatian Kuna",
@@ -627,7 +627,7 @@ described = {
         symbol_native="kn",
         isoformat="191",
     ),
-    "HUF": Currency(
+    "HUF": CurrencyModel(
         code="HUF",
         decimal_digits=0,
         name="Hungarian Forint",
@@ -637,7 +637,7 @@ described = {
         symbol_native="Ft",
         isoformat="348",
     ),
-    "IDR": Currency(
+    "IDR": CurrencyModel(
         code="IDR",
         decimal_digits=0,
         name="Indonesian Rupiah",
@@ -647,7 +647,7 @@ described = {
         symbol_native="Rp",
         isoformat="360",
     ),
-    "ILS": Currency(
+    "ILS": CurrencyModel(
         code="ILS",
         decimal_digits=2,
         name="Israeli New Sheqel",
@@ -657,7 +657,7 @@ described = {
         symbol_native="₪",
         isoformat="376",
     ),
-    "INR": Currency(
+    "INR": CurrencyModel(
         code="INR",
         decimal_digits=2,
         name="Indian Rupee",
@@ -667,7 +667,7 @@ described = {
         symbol_native="টকা",
         isoformat="356",
     ),
-    "IQD": Currency(
+    "IQD": CurrencyModel(
         code="IQD",
         decimal_digits=0,
         name="Iraqi Dinar",
@@ -677,7 +677,7 @@ described = {
         symbol_native="د.ع.\u200f",
         isoformat="368",
     ),
-    "IRR": Currency(
+    "IRR": CurrencyModel(
         code="IRR",
         decimal_digits=0,
         name="Iranian Rial",
@@ -687,7 +687,7 @@ described = {
         symbol_native="﷼",
         isoformat="364",
     ),
-    "ISK": Currency(
+    "ISK": CurrencyModel(
         code="ISK",
         decimal_digits=0,
         name="Icelandic Króna",
@@ -697,7 +697,7 @@ described = {
         symbol_native="kr",
         isoformat="352",
     ),
-    "JMD": Currency(
+    "JMD": CurrencyModel(
         code="JMD",
         decimal_digits=2,
         name="Jamaican Dollar",
@@ -707,7 +707,7 @@ described = {
         symbol_native="$",
         isoformat="388",
     ),
-    "JOD": Currency(
+    "JOD": CurrencyModel(
         code="JOD",
         decimal_digits=3,
         name="Jordanian Dinar",
@@ -717,7 +717,7 @@ described = {
         symbol_native="د.أ.\u200f",
         isoformat="400",
     ),
-    "JPY": Currency(
+    "JPY": CurrencyModel(
         code="JPY",
         decimal_digits=0,
         name="Japanese Yen",
@@ -727,7 +727,7 @@ described = {
         symbol_native="￥",
         isoformat="392",
     ),
-    "KES": Currency(
+    "KES": CurrencyModel(
         code="KES",
         decimal_digits=2,
         name="Kenyan Shilling",
@@ -737,7 +737,7 @@ described = {
         symbol_native="Ksh",
         isoformat="404",
     ),
-    "KHR": Currency(
+    "KHR": CurrencyModel(
         code="KHR",
         decimal_digits=2,
         name="Cambodian Riel",
@@ -747,7 +747,7 @@ described = {
         symbol_native="៛",
         isoformat="116",
     ),
-    "KMF": Currency(
+    "KMF": CurrencyModel(
         code="KMF",
         decimal_digits=0,
         name="Comorian Franc",
@@ -757,7 +757,7 @@ described = {
         symbol_native="FC",
         isoformat="174",
     ),
-    "KRW": Currency(
+    "KRW": CurrencyModel(
         code="KRW",
         decimal_digits=0,
         name="South Korean Won",
@@ -767,7 +767,7 @@ described = {
         symbol_native="₩",
         isoformat="410",
     ),
-    "KWD": Currency(
+    "KWD": CurrencyModel(
         code="KWD",
         decimal_digits=3,
         name="Kuwaiti Dinar",
@@ -777,7 +777,7 @@ described = {
         symbol_native="د.ك.\u200f",
         isoformat="414",
     ),
-    "KZT": Currency(
+    "KZT": CurrencyModel(
         code="KZT",
         decimal_digits=2,
         name="Kazakhstani Tenge",
@@ -787,7 +787,7 @@ described = {
         symbol_native="тңг.",
         isoformat="398",
     ),
-    "LBP": Currency(
+    "LBP": CurrencyModel(
         code="LBP",
         decimal_digits=0,
         name="Lebanese Pound",
@@ -797,7 +797,7 @@ described = {
         symbol_native="ل.ل.\u200f",
         isoformat="422",
     ),
-    "LKR": Currency(
+    "LKR": CurrencyModel(
         code="LKR",
         decimal_digits=2,
         name="Sri Lankan Rupee",
@@ -807,7 +807,7 @@ described = {
         symbol_native="SL Re",
         isoformat="144",
     ),
-    "LTL": Currency(
+    "LTL": CurrencyModel(
         code="LTL",
         decimal_digits=2,
         name="Lithuanian Litas",
@@ -817,7 +817,7 @@ described = {
         symbol_native="Lt",
         isoformat=None,
     ),
-    "LVL": Currency(
+    "LVL": CurrencyModel(
         code="LVL",
         decimal_digits=2,
         name="Latvian Lats",
@@ -827,7 +827,7 @@ described = {
         symbol_native="Ls",
         isoformat=None,
     ),
-    "LYD": Currency(
+    "LYD": CurrencyModel(
         code="LYD",
         decimal_digits=3,
         name="Libyan Dinar",
@@ -837,7 +837,7 @@ described = {
         symbol_native="د.ل.\u200f",
         isoformat="434",
     ),
-    "MAD": Currency(
+    "MAD": CurrencyModel(
         code="MAD",
         decimal_digits=2,
         name="Moroccan Dirham",
@@ -847,7 +847,7 @@ described = {
         symbol_native="د.م.\u200f",
         isoformat="504",
     ),
-    "MDL": Currency(
+    "MDL": CurrencyModel(
         code="MDL",
         decimal_digits=2,
         name="Moldovan Leu",
@@ -857,7 +857,7 @@ described = {
         symbol_native="MDL",
         isoformat="498",
     ),
-    "MGA": Currency(
+    "MGA": CurrencyModel(
         code="MGA",
         decimal_digits=0,
         name="Malagasy Ariary",
@@ -867,7 +867,7 @@ described = {
         symbol_native="MGA",
         isoformat="969",
     ),
-    "MKD": Currency(
+    "MKD": CurrencyModel(
         code="MKD",
         decimal_digits=2,
         name="Macedonian Denar",
@@ -877,7 +877,7 @@ described = {
         symbol_native="MKD",
         isoformat="807",
     ),
-    "MMK": Currency(
+    "MMK": CurrencyModel(
         code="MMK",
         decimal_digits=0,
         name="Myanma Kyat",
@@ -887,7 +887,7 @@ described = {
         symbol_native="K",
         isoformat="104",
     ),
-    "MOP": Currency(
+    "MOP": CurrencyModel(
         code="MOP",
         decimal_digits=2,
         name="Macanese Pataca",
@@ -897,7 +897,7 @@ described = {
         symbol_native="MOP$",
         isoformat="446",
     ),
-    "MUR": Currency(
+    "MUR": CurrencyModel(
         code="MUR",
         decimal_digits=0,
         name="Mauritian Rupee",
@@ -907,7 +907,7 @@ described = {
         symbol_native="MURs",
         isoformat="480",
     ),
-    "MXN": Currency(
+    "MXN": CurrencyModel(
         code="MXN",
         decimal_digits=2,
         name="Mexican Peso",
@@ -917,7 +917,7 @@ described = {
         symbol_native="$",
         isoformat="484",
     ),
-    "MYR": Currency(
+    "MYR": CurrencyModel(
         code="MYR",
         decimal_digits=2,
         name="Malaysian Ringgit",
@@ -927,7 +927,7 @@ described = {
         symbol_native="RM",
         isoformat="458",
     ),
-    "MZN": Currency(
+    "MZN": CurrencyModel(
         code="MZN",
         decimal_digits=2,
         name="Mozambican Metical",
@@ -937,7 +937,7 @@ described = {
         symbol_native="MTn",
         isoformat="943",
     ),
-    "NAD": Currency(
+    "NAD": CurrencyModel(
         code="NAD",
         decimal_digits=2,
         name="Namibian Dollar",
@@ -947,7 +947,7 @@ described = {
         symbol_native="N$",
         isoformat="516",
     ),
-    "NGN": Currency(
+    "NGN": CurrencyModel(
         code="NGN",
         decimal_digits=2,
         name="Nigerian Naira",
@@ -957,7 +957,7 @@ described = {
         symbol_native="₦",
         isoformat="566",
     ),
-    "NIO": Currency(
+    "NIO": CurrencyModel(
         code="NIO",
         decimal_digits=2,
         name="Nicaraguan Córdoba",
@@ -967,7 +967,7 @@ described = {
         symbol_native="C$",
         isoformat="558",
     ),
-    "NOK": Currency(
+    "NOK": CurrencyModel(
         code="NOK",
         decimal_digits=2,
         name="Norwegian Krone",
@@ -977,7 +977,7 @@ described = {
         symbol_native="kr",
         isoformat="578",
     ),
-    "NPR": Currency(
+    "NPR": CurrencyModel(
         code="NPR",
         decimal_digits=2,
         name="Nepalese Rupee",
@@ -987,7 +987,7 @@ described = {
         symbol_native="नेरू",
         isoformat="524",
     ),
-    "NZD": Currency(
+    "NZD": CurrencyModel(
         code="NZD",
         decimal_digits=2,
         name="New Zealand Dollar",
@@ -997,7 +997,7 @@ described = {
         symbol_native="$",
         isoformat="554",
     ),
-    "OMR": Currency(
+    "OMR": CurrencyModel(
         code="OMR",
         decimal_digits=3,
         name="Omani Rial",
@@ -1007,7 +1007,7 @@ described = {
         symbol_native="ر.ع.\u200f",
         isoformat="512",
     ),
-    "PAB": Currency(
+    "PAB": CurrencyModel(
         code="PAB",
         decimal_digits=2,
         name="Panamanian Balboa",
@@ -1017,7 +1017,7 @@ described = {
         symbol_native="B/.",
         isoformat="590",
     ),
-    "PEN": Currency(
+    "PEN": CurrencyModel(
         code="PEN",
         decimal_digits=2,
         name="Peruvian Nuevo Sol",
@@ -1027,7 +1027,7 @@ described = {
         symbol_native="S/.",
         isoformat="604",
     ),
-    "PHP": Currency(
+    "PHP": CurrencyModel(
         code="PHP",
         decimal_digits=2,
         name="Philippine Peso",
@@ -1037,7 +1037,7 @@ described = {
         symbol_native="₱",
         isoformat="608",
     ),
-    "PKR": Currency(
+    "PKR": CurrencyModel(
         code="PKR",
         decimal_digits=0,
         name="Pakistani Rupee",
@@ -1047,7 +1047,7 @@ described = {
         symbol_native="₨",
         isoformat="586",
     ),
-    "PLN": Currency(
+    "PLN": CurrencyModel(
         code="PLN",
         decimal_digits=2,
         name="Polish Zloty",
@@ -1057,7 +1057,7 @@ described = {
         symbol_native="zł",
         isoformat="985",
     ),
-    "PYG": Currency(
+    "PYG": CurrencyModel(
         code="PYG",
         decimal_digits=0,
         name="Paraguayan Guarani",
@@ -1067,7 +1067,7 @@ described = {
         symbol_native="₲",
         isoformat="600",
     ),
-    "QAR": Currency(
+    "QAR": CurrencyModel(
         code="QAR",
         decimal_digits=2,
         name="Qatari Rial",
@@ -1077,7 +1077,7 @@ described = {
         symbol_native="ر.ق.\u200f",
         isoformat="634",
     ),
-    "RON": Currency(
+    "RON": CurrencyModel(
         code="RON",
         decimal_digits=2,
         name="Romanian Leu",
@@ -1087,7 +1087,7 @@ described = {
         symbol_native="RON",
         isoformat="946",
     ),
-    "RSD": Currency(
+    "RSD": CurrencyModel(
         code="RSD",
         decimal_digits=0,
         name="Serbian Dinar",
@@ -1097,7 +1097,7 @@ described = {
         symbol_native="дин.",
         isoformat="941",
     ),
-    "RUB": Currency(
+    "RUB": CurrencyModel(
         code="RUB",
         decimal_digits=2,
         name="Russian Ruble",
@@ -1107,7 +1107,7 @@ described = {
         symbol_native="руб.",
         isoformat="643",
     ),
-    "RWF": Currency(
+    "RWF": CurrencyModel(
         code="RWF",
         decimal_digits=0,
         name="Rwandan Franc",
@@ -1117,7 +1117,7 @@ described = {
         symbol_native="FR",
         isoformat="646",
     ),
-    "SAR": Currency(
+    "SAR": CurrencyModel(
         code="SAR",
         decimal_digits=2,
         name="Saudi Riyal",
@@ -1127,7 +1127,7 @@ described = {
         symbol_native="ر.س.\u200f",
         isoformat="682",
     ),
-    "SDG": Currency(
+    "SDG": CurrencyModel(
         code="SDG",
         decimal_digits=2,
         name="Sudanese Pound",
@@ -1137,7 +1137,7 @@ described = {
         symbol_native="SDG",
         isoformat="938",
     ),
-    "SEK": Currency(
+    "SEK": CurrencyModel(
         code="SEK",
         decimal_digits=2,
         name="Swedish Krona",
@@ -1147,7 +1147,7 @@ described = {
         symbol_native="kr",
         isoformat="752",
     ),
-    "SGD": Currency(
+    "SGD": CurrencyModel(
         code="SGD",
         decimal_digits=2,
         name="Singapore Dollar",
@@ -1157,7 +1157,7 @@ described = {
         symbol_native="$",
         isoformat="702",
     ),
-    "SOS": Currency(
+    "SOS": CurrencyModel(
         code="SOS",
         decimal_digits=0,
         name="Somali Shilling",
@@ -1167,7 +1167,7 @@ described = {
         symbol_native="Ssh",
         isoformat="706",
     ),
-    "SYP": Currency(
+    "SYP": CurrencyModel(
         code="SYP",
         decimal_digits=0,
         name="Syrian Pound",
@@ -1177,7 +1177,7 @@ described = {
         symbol_native="ل.س.\u200f",
         isoformat="760",
     ),
-    "THB": Currency(
+    "THB": CurrencyModel(
         code="THB",
         decimal_digits=2,
         name="Thai Baht",
@@ -1187,7 +1187,7 @@ described = {
         symbol_native="฿",
         isoformat="764",
     ),
-    "TND": Currency(
+    "TND": CurrencyModel(
         code="TND",
         decimal_digits=3,
         name="Tunisian Dinar",
@@ -1197,7 +1197,7 @@ described = {
         symbol_native="د.ت.\u200f",
         isoformat="788",
     ),
-    "TOP": Currency(
+    "TOP": CurrencyModel(
         code="TOP",
         decimal_digits=2,
         name="Tongan Paʻanga",
@@ -1207,7 +1207,7 @@ described = {
         symbol_native="T$",
         isoformat="776",
     ),
-    "TRY": Currency(
+    "TRY": CurrencyModel(
         code="TRY",
         decimal_digits=2,
         name="Turkish Lira",
@@ -1217,7 +1217,7 @@ described = {
         symbol_native="TL",
         isoformat="949",
     ),
-    "TTD": Currency(
+    "TTD": CurrencyModel(
         code="TTD",
         decimal_digits=2,
         name="Trinidad and Tobago Dollar",
@@ -1227,7 +1227,7 @@ described = {
         symbol_native="$",
         isoformat="780",
     ),
-    "TWD": Currency(
+    "TWD": CurrencyModel(
         code="TWD",
         decimal_digits=2,
         name="New Taiwan Dollar",
@@ -1237,7 +1237,7 @@ described = {
         symbol_native="NT$",
         isoformat="901",
     ),
-    "TZS": Currency(
+    "TZS": CurrencyModel(
         code="TZS",
         decimal_digits=0,
         name="Tanzanian Shilling",
@@ -1247,7 +1247,7 @@ described = {
         symbol_native="TSh",
         isoformat="834",
     ),
-    "UAH": Currency(
+    "UAH": CurrencyModel(
         code="UAH",
         decimal_digits=2,
         name="Ukrainian Hryvnia",
@@ -1257,7 +1257,7 @@ described = {
         symbol_native="₴",
         isoformat="980",
     ),
-    "UGX": Currency(
+    "UGX": CurrencyModel(
         code="UGX",
         decimal_digits=0,
         name="Ugandan Shilling",
@@ -1267,7 +1267,7 @@ described = {
         symbol_native="USh",
         isoformat="800",
     ),
-    "USD": Currency(
+    "USD": CurrencyModel(
         code="USD",
         decimal_digits=2,
         name="US Dollar",
@@ -1277,7 +1277,7 @@ described = {
         symbol_native="$",
         isoformat="840",
     ),
-    "UYU": Currency(
+    "UYU": CurrencyModel(
         code="UYU",
         decimal_digits=2,
         name="Uruguayan Peso",
@@ -1287,7 +1287,7 @@ described = {
         symbol_native="$",
         isoformat="858",
     ),
-    "UZS": Currency(
+    "UZS": CurrencyModel(
         code="UZS",
         decimal_digits=0,
         name="Uzbekistan Som",
@@ -1297,7 +1297,7 @@ described = {
         symbol_native="UZS",
         isoformat="860",
     ),
-    "VEF": Currency(
+    "VEF": CurrencyModel(
         code="VEF",
         decimal_digits=2,
         name="Venezuelan Bolívar",
@@ -1307,7 +1307,7 @@ described = {
         symbol_native="Bs.F.",
         isoformat="937",
     ),
-    "VND": Currency(
+    "VND": CurrencyModel(
         code="VND",
         decimal_digits=0,
         name="Vietnamese Dong",
@@ -1317,7 +1317,7 @@ described = {
         symbol_native="₫",
         isoformat="704",
     ),
-    "XAF": Currency(
+    "XAF": CurrencyModel(
         code="XAF",
         decimal_digits=0,
         name="CFA Franc BEAC",
@@ -1327,7 +1327,7 @@ described = {
         symbol_native="FCFA",
         isoformat="950",
     ),
-    "XOF": Currency(
+    "XOF": CurrencyModel(
         code="XOF",
         decimal_digits=0,
         name="CFA Franc BCEAO",
@@ -1337,7 +1337,7 @@ described = {
         symbol_native="CFA",
         isoformat="952",
     ),
-    "YER": Currency(
+    "YER": CurrencyModel(
         code="YER",
         decimal_digits=0,
         name="Yemeni Rial",
@@ -1347,7 +1347,7 @@ described = {
         symbol_native="ر.ي.\u200f",
         isoformat="886",
     ),
-    "ZAR": Currency(
+    "ZAR": CurrencyModel(
         code="ZAR",
         decimal_digits=2,
         name="South African Rand",
@@ -1357,7 +1357,7 @@ described = {
         symbol_native="R",
         isoformat="710",
     ),
-    "ZMK": Currency(
+    "ZMK": CurrencyModel(
         code="ZMK",
         decimal_digits=0,
         name="Zambian Kwacha",
