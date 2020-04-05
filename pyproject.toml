@@ -2,11 +2,13 @@
 name = "aioqiwi"
 version = "1.1.4"
 description = "Convenient and asynchronous qiwi.com api-wrapper library"
+licence = "MIT"
 authors = ["Martin Winks <cat@snejugal.ru>"]
 readme = 'readme.rst'
 homepage = "https://github.com/uwinx/aioqiwi"
 repository = "https://github.com/uwinx/aioqiwi"
 keywords = ['asyncio', 'aiohttp', 'qiwi', 'api-client', 'aioqiwi']
+
 packages = [
     {include = "aioqiwi"},
 ]
