@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "aioqiwi"
-version = "1.1.4"
+version = "1.1.5"
 description = "Convenient and asynchronous qiwi.com api-wrapper library"
-licence = "MIT"
+license = "MIT"
 authors = ["Martin Winks <cat@snejugal.ru>"]
 readme = 'readme.rst'
 homepage = "https://github.com/uwinx/aioqiwi"
