@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "aioqiwi"
+version = "1.1.2"
+description = "Convenient and asynchronous qiwi.com api-wrapper library"
+authors = ["Martin Winks <cat@snejugal.ru>"]
+readme = 'readme.rst'
+homepage = "https://github.com/"
+repository = "https://github.com/sdispater/pendulum"
+keywords = ['asyncio', 'aiohttp', 'qiwi', 'api-client']
+packages = [
+    {include = "aioqiwi"},
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+pydantic = "^1.4"
+aiohttp = "^3.6.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

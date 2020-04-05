@@ -45,9 +45,6 @@ Installation
     wallet = Wallet()
     wallet.tools.json_module = json.JSONModule("orjson")
 
-.. note::
-    You may want to try out "Out of the box" asyncio connector.
-
 --------------------
 🔹 Dive-in Examples
 --------------------
