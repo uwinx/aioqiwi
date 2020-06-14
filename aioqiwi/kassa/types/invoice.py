@@ -39,7 +39,7 @@ class Invoice(BaseModel):
     pay_url: str = Field(..., alias="payUrl")
     amount: Amount = Field(..., alias="amount")
     status: Status = Field(..., alias="status")
-    customer: Optional[Customer] = Field(type(None), alias="customer")
+    customer: Optional[Customer] = Field(None, alias="customer")
     custom_fields: Optional[Dict[str, Any]] = Field(type(None), alias="customFields")
 
 
