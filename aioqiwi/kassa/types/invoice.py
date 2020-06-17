@@ -18,7 +18,7 @@ class Status(BaseModel):
     """Object: status"""
 
     value: str = Field(..., alias="value")
-    datetime: str = Field(..., alias="datetime")
+    datetime: str = Field(..., alias="changedDateTime")
 
 
 class Amount(BaseModel):
@@ -39,7 +39,7 @@ class Invoice(BaseModel):
     pay_url: str = Field(..., alias="payUrl")
     amount: Amount = Field(..., alias="amount")
     status: Status = Field(..., alias="status")
-    customer: Customer = Field(..., alias="customer")
+    customer: Optional[Customer] = Field(None, alias="customer")
     custom_fields: Optional[Dict[str, Any]] = Field(type(None), alias="customFields")
 
 
